@@ -6,30 +6,21 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:passwordfortest@localhost:5432/vayora_test'
 
 db = SQLAlchemy(app)
-user_address = db.Table('user_address',
-                        db.Column('users_id', db.Integer, db.ForeignKey('users.users_id')),
-                        db.Column('address_id', db.Integer, db.ForeignKey('address.address_id'))
-                        )
-
-class Users(db.Model):
-    __tablename__ = 'users'
-    users_id = db.Column(db.Integer, primary_key=True)
-    users_firstname = db.Column(db.String(150), nullable=False)
-    users_lastname = db.Column(db.String(150), nullable=False)
-    users_email = db.Column(db.String(250), nullable=False)
-    users_phone = db.Column(db.String(20))
-    users_birthday = db.Column(db.Date)
-    users_address = db.relationship('Address', secondary=user_address, backref='users')
 
 class Pilot(db.Model):
     pilot_id = db.Column(db.Integer, primary_key=True)
-    pilot_license_number = db.Column(db.String(150), nullable=True)
+    pilot_number = db.Column(db.Integer, nullable=False)
+    pilot_firstname = db.Column(db.String(150), nullable=False)
+    pilot_lastname = db.Column(db.String(150), nullable=False)
+    pilot_email = db.Column(db.String(250), nullable=False)
+    pilot_phone = db.Column(db.String(20))
+    pilot_birthday = db.Column(db.Date)
+    pilot_address_id = db.Column(db.Integer, db.ForeignKey('address.address_id'))
+    pilot_address = db.relationship('Address', backref='users')
     pilot_maxdistance = db.Column(db.Integer, nullable=True)
-
-class Validator(db.Model):
-    validator_id = db.Column(db.Integer, primary_key=True)
-    validator_score = db.Column(db.Integer, nullable=True)
-
+    pilot_license_number = db.Column(db.String(150), nullable=True)
+    pilot_validator = db.Column(db.Boolean, default=False)
+    pilot_validator_score = db.Column(db.Integer, nullable=True)
 
 class Takeoff(db.Model):
     takeoff_id = db.Column(db.Integer, primary_key=True)
@@ -49,10 +40,10 @@ class Takeoff(db.Model):
 
 class Flight(db.Model):
     flight_id = db.Column(db.Integer, primary_key=True)
-    flight_startTime = db.Column(db.DateTime, nullable=False)
-    flight_airTime = db.Column(db.Interval, nullable=False)
+    flight_starttime = db.Column(db.DateTime(timezone=True), nullable=False)
+    flight_airtime = db.Column(db.Time, nullable=False)
     flight_distance = db.Column(db.Integer, nullable=True)
-    flight_maxHeight = db.Column(db.Integer, nullable=False)
+    flight_maxheight = db.Column(db.Integer, nullable=True)
     flight_landing = db.Column(db.String(250), nullable=True)
     flight_pilot_id = db.Column(db.Integer, db.ForeignKey('pilot.pilot_id'), nullable=False)
     flight_pilot = db.relationship('Pilot', backref='flights')
@@ -66,17 +57,17 @@ class Country(db.Model):
 
 class City(db.Model):
     city_id = db.Column(db.Integer, primary_key=True)
-    city_name = db.Column(db.String(150), nullable=False)
+    city_name = db.Column(db.String(150), nullable=False, unique=True)
     city_postal_code = db.Column(db.String(10), nullable=False)
 
 class Street(db.Model):
     street_id = db.Column(db.Integer, primary_key=True)
-    street_name = db.Column(db.String(150), nullable=False)
+    street_name = db.Column(db.String(150), nullable=False, unique=True)
 
 
 class Address(db.Model):
     address_id = db.Column(db.Integer, primary_key=True)
-    address_street_Number = db.Column(db.String(10), nullable=True)
+    address_street_number = db.Column(db.String(10), nullable=True)
 
     address_city_id = db.Column(db.Integer, db.ForeignKey('city.city_id'), nullable=False)
     address_city = db.relationship('City', backref='addresses')
@@ -84,3 +75,9 @@ class Address(db.Model):
     address_street = db.relationship('Street', backref='addresses')
     address_country_id = db.Column(db.Integer, db.ForeignKey('country.country_id'), nullable=False)
     address_country = db.relationship('Country', backref='addresses')
+
+    __table_args__ = (
+        db.UniqueConstraint(address_street_number, address_city_id, address_street_id, address_country_id),
+    )
+
+
