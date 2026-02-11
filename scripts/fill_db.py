@@ -2,15 +2,15 @@ from app.api.db_models import *
 import json
 
 
-def fill_db_1():
+def fill_db():
     """
 
     :return:
     """
-    with open('../data/takeoff_full.json', "r",encoding='utf-8') as f:
-        data = json.load(f)
+    with open('../data/takeoff_data/takeoff_full.json', "r", encoding='utf-8') as f:
+        data_takeoff = json.load(f)
 
-    for dic in data:
+    for dic in data_takeoff:
         country = Country.query.filter_by(country_name=dic['country']).first()
         if not country:
             country = Country(country_name = dic['country'],
@@ -48,6 +48,7 @@ def fill_db_1():
 
     db.session.commit()
 
+
 with app.app_context():
     db.create_all()
-    fill_db_1()
+    fill_db()
