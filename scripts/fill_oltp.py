@@ -1,6 +1,5 @@
-from app.api.db_models import *
 import json
-
+from application.db.oltp_models import *
 
 def fill_db():
     """
@@ -32,8 +31,7 @@ def fill_db():
             db.session.flush()
 
         address = Address(address_street_id = street.street_id if street else None,
-                          address_city_id= city.city_id,
-                          address_country_id = country.country_id)
+                          address_city_id= city.city_id,                          address_country_id = country.country_id)
 
         db.session.add(address)
         db.session.flush()

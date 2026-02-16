@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, text, inspect
+from sqlalchemy import create_engine, text, inspect, DateTime
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -10,7 +10,6 @@ with psql_oltp.connect() as conn:
 
     req = conn.execute(text('SELECT tkf.takeoff_name FROM takeoff tkf'))
     raw = [i[0] for i in req.fetchall()]
-
 
 inspector = inspect(psql_staging)
 columns_db = [col["name"] for col in inspector.get_columns("weather")]
@@ -32,8 +31,8 @@ for tkf in raw:
         temp_df = temp_df[temp_df['weather_date'].notna()]
         temp_df.reset_index(drop=True, inplace=True)
 
-        temp_df['weather_date'] = pd.to_datetime(temp_df['weather_date'], format='%Y-%m-%d %H:%M:%S%z', utc=True)
-        temp_df['weather_place'] = tkf
+        temp_df['weather_date'] = pd.to_datetime(temp_df['weather_date']).dt.strftime('%Y-%m-%d %H:%M:%S')
+        temp_df['weather_place'] = f"{tkf}"
         temp_df.columns = temp_df.columns.str.replace('"', '').str.strip()
         temp_df.columns = temp_df.columns.str.lower()
-        temp_df.to_sql('weather', con= psql_staging, if_exists="append", method='multi', chunksize=5000, index= False)
+        temp_df.to_sql('weather', con= psql_staging, if_exists="append", method='multi', chunksize=10000, index= False, dtype={'weather_date': DateTime(timezone=False)})

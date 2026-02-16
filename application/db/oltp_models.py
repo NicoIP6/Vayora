@@ -1,13 +1,15 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from application.extensions import db, bcrypt, login_manager
+from flask_login import UserMixin
+from sqlalchemy.dialects.postgresql import TIMESTAMP
 
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:passwordfortest@localhost:5432/vayora_test'
+@login_manager.user_loader
+def load_user(user_id):
+    return Pilot.query.get(int(user_id))
 
-db = SQLAlchemy(app)
+class Pilot(db.Model, UserMixin):
+    __bind_key__ = None
 
-class Pilot(db.Model):
     pilot_id = db.Column(db.Integer, primary_key=True)
     pilot_number = db.Column(db.Integer, nullable=False)
     pilot_firstname = db.Column(db.String(150), nullable=False)
@@ -21,8 +23,20 @@ class Pilot(db.Model):
     pilot_license_number = db.Column(db.String(150), nullable=True)
     pilot_validator = db.Column(db.Boolean, default=False)
     pilot_validator_score = db.Column(db.Integer, nullable=True)
+    pilot_password_hash = db.Column(db.String(128), nullable=False)
+
+    def get_id(self):
+        return str(self.pilot_id)
+
+    def set_password(self, password):
+        self.pilot_password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.pilot_password_hash, password)
 
 class Takeoff(db.Model):
+    __bind_key__ = None
+
     takeoff_id = db.Column(db.Integer, primary_key=True)
     takeoff_name = db.Column(db.String(150), nullable=False)
     takeoff_latitude = db.Column(db.Float, nullable=False)
@@ -39,33 +53,42 @@ class Takeoff(db.Model):
     takeoff_address = db.relationship('Address', backref='takeoffs')
 
 class Flight(db.Model):
+    __bind_key__ = None
+
     flight_id = db.Column(db.Integer, primary_key=True)
-    flight_starttime = db.Column(db.DateTime(timezone=True), nullable=False)
+    flight_starttime = db.Column(TIMESTAMP(timezone=False, precision=0), nullable=False)
     flight_airtime = db.Column(db.Time, nullable=False)
     flight_distance = db.Column(db.Integer, nullable=True)
     flight_maxheight = db.Column(db.Integer, nullable=True)
-    flight_landing = db.Column(db.String(250), nullable=True)
     flight_pilot_id = db.Column(db.Integer, db.ForeignKey('pilot.pilot_id'), nullable=False)
     flight_pilot = db.relationship('Pilot', backref='flights')
     flight_takeoff_id = db.Column(db.Integer, db.ForeignKey('takeoff.takeoff_id'))
     flight_takeoff = db.relationship('Takeoff', backref='flights')
 
 class Country(db.Model):
+    __bind_key__ = None
+
     country_id = db.Column(db.Integer, primary_key=True)
     country_name = db.Column(db.String(150), nullable=False)
     country_code = db.Column(db.String(2), nullable=False)
 
 class City(db.Model):
+    __bind_key__ = None
+
     city_id = db.Column(db.Integer, primary_key=True)
     city_name = db.Column(db.String(150), nullable=False, unique=True)
     city_postal_code = db.Column(db.String(10), nullable=False)
 
 class Street(db.Model):
+    __bind_key__ = None
+
     street_id = db.Column(db.Integer, primary_key=True)
     street_name = db.Column(db.String(150), nullable=False, unique=True)
 
 
 class Address(db.Model):
+    __bind_key__ = None
+
     address_id = db.Column(db.Integer, primary_key=True)
     address_street_number = db.Column(db.String(10), nullable=True)
 
