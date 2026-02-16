@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Flight Analytics{% endblock %}
+
+{% block extra_head %}
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="header">
+        <h1>Flight Statistics Dashboard</h1>
+        <a href="{{ url_for('logout') }}" class="btn btn-logout">Logout</a>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                    <div class="flash flash-success">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div id="plot"></div>
+
+    <div class="actions">
+        <a href="{{ url_for('analytics.download_csv', pilot_number=request.view_args.pilot_number) }}"
+           class="btn btn-success">
+           📊 Download CSV Report
+        </a>
+    </div>
+
+    <script>
+        var data = [{
+            x: {{ seasons | tojson | safe }},
+            y: {{ distances | tojson | safe }},
+            type: 'bar',
+            marker: {
+                color: 'rgba(102, 126, 234, 0.8)',
+                line: {
+                    color: 'rgba(102, 126, 234, 1)',
+                    width: 2
+                }
+            },
+            hovertemplate: '<b>%{x}</b><br>Distance: %{y} km<extra></extra>'
+        }];
+
+        var layout = {
+            title: {
+                text: 'Total Distance per Season',
+                font: {
+                    size: 20,
+                    color: '#333',
+                    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto'
+                }
+            },
+            xaxis: {
+                title: {
+                    text: 'Season',
+                    font: {
+                        size: 14,
+                        color: '#666'
+                    }
+                },
+                tickfont: {
+                    size: 12,
+                    color: '#666'
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Total Distance (km)',
+                    font: {
+                        size: 14,
+                        color: '#666'
+                    }
+                },
+                tickfont: {
+                    size: 12,
+                    color: '#666'
+                }
+            },
+            plot_bgcolor: '#f9fafb',
+            paper_bgcolor: 'white',
+            margin: {
+                l: 60,
+                r: 40,
+                t: 60,
+                b: 60
+            },
+            hovermode: 'closest'
+        };
+
+        var config = {
+            responsive: true,
+            displayModeBar: false
+        };
+
+        Plotly.newPlot('plot', data, layout, config);
+    </script>
+{% endblock %}
