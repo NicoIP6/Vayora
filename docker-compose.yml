@@ -38,6 +38,8 @@ services:
         DB_PORT: ${DB_PORT}
     networks:
       - vayora_network
+networks:
+    vayora_network:
 #
 #  weather_job:
 #    image: vayora_get_weather:V0.0.2
@@ -54,6 +56,5 @@ services:
 #    networks:
 #      - vayora_network
 #
-networks:
-  vayora_network:
+
 #
