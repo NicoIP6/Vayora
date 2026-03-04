@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Flight Analytics{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>🌤️ Flight Weather Analytics</h1>
+
+    <div class="actions">
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('analytics.index') }}" class="btn btn-success">
+                Dashboard
+            </a>
+            <a href="{{ url_for('login_bp.logout') }}" class="btn btn-logout">
+                Logout
+            </a>
+        {% else %}
+            <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">
+                Login
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<h2>Weather Forecast for Today</h2>
+
+{% if weather %}
+<div style="overflow-x:auto;">
+    <table style="
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 8px;
+        overflow: hidden;
+        font-size: 14px;
+    ">
+        <thead style="background: #f5f7fa;">
+            <tr>
+                <th style="padding: 12px; text-align:left;">Date</th>
+                <th style="padding: 12px; text-align:left;">Location</th>
+                <th style="padding: 12px; text-align:left;">Humidity (%)</th>
+                <th style="padding: 12px; text-align:left;">Precipitation (mm)</th>
+                <th style="padding: 12px; text-align:left;">Pressure MSL (hPa)</th>
+                <th style="padding: 12px; text-align:left;">Surface Pressure (hPa)</th>
+                <th style="padding: 12px; text-align:left;">Cloud Cover (%)</th>
+                <th style="padding: 12px; text-align:left;">Wind Speed 180m (km/h)</th>
+                <th style="padding: 12px; text-align:left;">Wind Direction 180m (°)</th>
+                <th style="padding: 12px; text-align:left;">Temperature 180m (°C)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="border-top: 1px solid #e5e7eb;">
+                <td style="padding: 12px;">{{ weather.weather_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td style="padding: 12px;">{{ weather.weather_place }}</td>
+                <td style="padding: 12px;">{{ weather.relative_humidity_2m }}</td>
+                <td style="padding: 12px;">{{ weather.precipitation }}</td>
+                <td style="padding: 12px;">{{ weather.pressure_msl }}</td>
+                <td style="padding: 12px;">{{ weather.surface_pressure }}</td>
+                <td style="padding: 12px;">{{ weather.cloud_cover_high }}</td>
+                <td style="padding: 12px;">{{ weather.wind_speed_180m }}</td>
+                <td style="padding: 12px;">{{ weather.wind_direction_180m }}</td>
+                <td style="padding: 12px;">{{ weather.temperature_180m }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <p style="margin-top:20px; color:#999;">
+        No weather data available for today.
+    </p>
+{% endif %}
+
+{% endblock %}

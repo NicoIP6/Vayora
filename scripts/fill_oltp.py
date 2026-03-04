@@ -1,0 +1,57 @@
+import json
+from flask import Flask
+
+
+def fill_db():
+    """
+
+    :return:
+    """
+    with open('../data/takeoff_data/takeoff_full.json', "r", encoding='utf-8') as f:
+        data_takeoff = json.load(f)
+
+    for dic in data_takeoff:
+        country = Country.query.filter_by(country_name=dic['country']).first()
+        if not country:
+            country = Country(country_name = dic['country'],
+                              country_code = dic['country_code'])
+            db.session.add(country)
+            db.session.flush()
+
+        city = City.query.filter_by(city_name=dic['city']).first()
+        if not city and dic['city']:
+            city = City(city_name = dic['city'],
+                        city_postal_code = dic['postal_code'])
+            db.session.add(city)
+            db.session.flush()
+
+        street = Street.query.filter_by(street_name=dic['street']).first()
+        if not street and dic['street']:
+            street = Street(street_name = dic['street'])
+            db.session.add(street)
+            db.session.flush()
+
+        address = Address(address_street_id = street.street_id if street else None,
+                          address_city_id= city.city_id if city else None,
+                          address_country_id = country.country_id)
+
+        db.session.add(address)
+        db.session.flush()
+
+        takeoff = Takeoff(takeoff_name=dic['Name'],
+                          takeoff_latitude=dic['Latitude'],
+                          takeoff_longitude=dic['Longitude'],
+                          takeoff_type=dic['Type'],
+                          takeoff_address_id=address.address_id
+                          )
+        db.session.add(takeoff)
+
+    db.session.commit()
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:passwordfortest@localhost:5432/vayora'
+db.init_app(app)
+
+with app.app_context():
+    db.create_all()
+    fill_db()
