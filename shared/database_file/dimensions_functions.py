@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 def fill_dim_pilot(db_conn):
     """
 
-    :param db_conn: must be a duck db connexion
+    :param db_conn: must be a duck database_file connexion
 
     """
     time_use = dt.now()
@@ -18,13 +18,13 @@ def fill_dim_pilot(db_conn):
     try:
         req = """SELECT vp.pilot_number, vp.pilot_maxdistance
                   FROM vayora.pilot vp
-                  WHERE vp.pilot_number NOT IN (SELECT dim_pilot_bk FROM dwh.dim_pilot)
+                  WHERE vp.pilot_number NOT IN (SELECT dim_pilot_bk FROM vayora_dw.dim_pilot)
                 """
 
         count_req = f"SELECT COUNT(*) AS n FROM ({req})"
         rows_to_insert = db_conn.execute(count_req).fetchone()[0]
 
-        db_conn.execute(f"INSERT INTO dwh.dim_pilot (dim_pilot_bk, dim_pilot_maxdistance) {req}")
+        db_conn.execute(f"INSERT INTO vayora_dw.dim_pilot (dim_pilot_bk, dim_pilot_maxdistance) {req}")
 
         db_conn.commit()
 
@@ -54,14 +54,14 @@ def fill_dim_takeoff(db_conn):
     try:
         req = """SELECT vt.takeoff_id, vt.takeoff_name
                   FROM vayora.takeoff vt
-                  WHERE vt.takeoff_id NOT IN (SELECT dim_takeoff_bk FROM dwh.dim_takeoff) 
+                  WHERE vt.takeoff_id NOT IN (SELECT dim_takeoff_bk FROM vayora_dw.dim_takeoff) 
                 """
 
         count_req = f"SELECT COUNT(*) AS n FROM ({req})"
 
         rows_to_insert = db_conn.execute(count_req).fetchone()[0]
 
-        db_conn.execute(f"INSERT INTO dwh.dim_takeoff (dim_takeoff_bk, dim_takeoff_name) {req}")
+        db_conn.execute(f"INSERT INTO vayora_dw.dim_takeoff (dim_takeoff_bk, dim_takeoff_name) {req}")
         db_conn.commit()
 
         rows_inserted = rows_to_insert - db_conn.execute(count_req).fetchone()[0]
@@ -84,7 +84,7 @@ def fill_dim_weather(db_conn):
     time_use = dt.now()
     formated_time = time_use.strftime("%d-%m-%Y %H:%M:%S")
     cols = db_conn.execute(""" SELECT column_name
-                               FROM dwh.information_schema.columns
+                               FROM vayora_dw.information_schema.columns
                                WHERE table_schema = 'public'
                                  AND table_name = 'dim_weather'
                                  AND column_name <> 'dim_weather_sk'
@@ -93,8 +93,8 @@ def fill_dim_weather(db_conn):
 
     try:
         req = """SELECT * EXCLUDE (fw.weather_date, fw.weather_place)
-                 FROM forecast.weather fw
-                 WHERE fw.weather_id NOT IN (SELECT dim_weather_bk FROM dwh.dim_weather)
+                 FROM weather.weather_historic fw
+                 WHERE fw.weather_id NOT IN (SELECT dim_weather_bk FROM vayora_dw.dim_weather)
                 """
 
         count_req = f"SELECT COUNT(*) AS n FROM ({req})"
@@ -102,7 +102,7 @@ def fill_dim_weather(db_conn):
         rows_to_insert = db_conn.execute(count_req).fetchone()[0]
 
         db_conn.execute("BEGIN TRANSACTION")
-        db_conn.execute(f"""INSERT INTO dwh.dim_weather ({col_list}) {req}""")
+        db_conn.execute(f"""INSERT INTO vayora_dw.dim_weather ({col_list}) {req}""")
 
         db_conn.commit()
         rows_inserted = rows_to_insert - db_conn.execute(count_req).fetchone()[0]

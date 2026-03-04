@@ -1,5 +1,6 @@
 import json
-from application.db.oltp_models import *
+from flask import Flask
+
 
 def fill_db():
     """
@@ -31,7 +32,8 @@ def fill_db():
             db.session.flush()
 
         address = Address(address_street_id = street.street_id if street else None,
-                          address_city_id= city.city_id,                          address_country_id = country.country_id)
+                          address_city_id= city.city_id if city else None,
+                          address_country_id = country.country_id)
 
         db.session.add(address)
         db.session.flush()
@@ -46,6 +48,9 @@ def fill_db():
 
     db.session.commit()
 
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:passwordfortest@localhost:5432/vayora'
+db.init_app(app)
 
 with app.app_context():
     db.create_all()

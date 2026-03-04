@@ -1,16 +1,13 @@
-from application.db.dimensions_functions import fill_dim_pilot, fill_dim_weather, fill_dim_takeoff
-from application.db.fact_table_functions import fill_fact_fly
-from application.db.connexion_function import setup_duckdb
+from shared.database_file.dimensions_functions import fill_dim_pilot, fill_dim_weather, fill_dim_takeoff
+from shared.database_file.fact_table_functions import fill_fact_fly
+from shared.database_file.set_up import Setup
 
-oltp_conn = ("vayora", 'postgresql://postgres:passwordfortest@localhost:5432/vayora_test')
-stating_conn = ("forecast", 'postgresql://postgres:passwordfortest@localhost:5432/vayora_weather_staging')
-dwh_conn = ("dwh", 'postgresql://postgres:passwordfortest@localhost:5432/vayora_dw')
 
-postgres_conn = setup_duckdb(oltp_conn, stating_conn, dwh_conn)
+postgres_conn = Setup.get_duckdb_conn()
 
-fill_dim_pilot(postgres_conn)
-fill_dim_takeoff(postgres_conn)
-fill_dim_weather(postgres_conn)
+# fill_dim_pilot(postgres_conn)
+# fill_dim_takeoff(postgres_conn)
+# fill_dim_weather(postgres_conn)
 result = fill_fact_fly(postgres_conn)
 
 print(f"\n{'=' * 70}")

@@ -30,7 +30,7 @@ def fill_fact_fly(db_conn):
                     SELECT COUNT(*) AS n
                     FROM vayora.flight vf
                     WHERE NOT EXISTS (SELECT 1 \
-                                      FROM dwh.fact_fly ff \
+                                      FROM vayora_dw.fact_fly ff \
                                       WHERE ff.fact_fly_bk = vf.flight_id) \
                     """
 
@@ -45,7 +45,7 @@ def fill_fact_fly(db_conn):
         # Constructing the insertion request
 
         insert_req = """
-                     INSERT INTO dwh.fact_fly (fact_fly_bk, 
+                     INSERT INTO vayora_dw.fact_fly (fact_fly_bk, 
                                                   fact_fly_distance, 
                                                   fact_fly_airtime,
                                                   fact_fly_pilot,
@@ -77,26 +77,26 @@ def fill_fact_fly(db_conn):
 
                      -- JOIN with dim_pilot 
                      INNER JOIN vayora.pilot p ON vf.flight_pilot_id = p.pilot_id
-                     INNER JOIN dwh.dim_pilot dp ON p.pilot_number = dp.dim_pilot_bk
+                     INNER JOIN vayora_dw.dim_pilot dp ON p.pilot_number = dp.dim_pilot_bk
 
                      -- JOIN with dim_takeoff
                      INNER JOIN vayora.takeoff vt ON vt.takeoff_id = vf.flight_takeoff_id
-                     INNER JOIN dwh.dim_takeoff dt ON vt.takeoff_name = dt.dim_takeoff_name
+                     INNER JOIN vayora_dw.dim_takeoff dt ON vt.takeoff_name = dt.dim_takeoff_name
 
                      -- JOIN with dim_weather
-                     INNER JOIN forecast.weather fw ON fw.weather_date = vf.flight_starttime AND fw.weather_place = vt.takeoff_name
-                     INNER JOIN dwh.dim_weather dw ON fw.weather_id = dw.dim_weather_bk
+                     INNER JOIN weather.weather_historic fw ON fw.weather_date = vf.flight_starttime AND fw.weather_place = vt.takeoff_name
+                     INNER JOIN vayora_dw.dim_weather dw ON fw.weather_id = dw.dim_weather_bk
 
                      -- Exclude existing flights
                      WHERE NOT EXISTS (SELECT 1
-                                       FROM dwh.fact_fly ff
+                                       FROM vayora_dw.fact_fly ff
                                        WHERE ff.fact_fly_bk = vf.flight_id)
                      
                      -- Check if flight date in dim_date    
-                     AND CAST(strftime(vf.flight_starttime, '%Y%m%d') AS INTEGER) IN (SELECT date_key FROM dwh.dim_date)
+                     AND CAST(strftime(vf.flight_starttime, '%Y%m%d') AS INTEGER) IN (SELECT date_key FROM vayora_dw.dim_date)
                      
                      -- -- Check if flight time in dim_time 
-                     AND (EXTRACT(HOUR FROM vf.flight_starttime) * 100 + EXTRACT(MINUTE FROM vf.flight_starttime))::INTEGER IN (SELECT time_key FROM dwh.dim_time)
+                     AND (EXTRACT(HOUR FROM vf.flight_starttime) * 100 + EXTRACT(MINUTE FROM vf.flight_starttime))::INTEGER IN (SELECT time_key FROM vayora_dw.dim_time)
                     """
 
         # Execution of the insertion request
@@ -154,7 +154,7 @@ def validate_fact_fly(db_conn):
                                        MIN(fact_fly_distance)           AS min_distance,
                                        MAX(fact_fly_distance)           AS max_distance,
                                        AVG(fact_fly_distance) ::INTEGER AS avg_distance
-                                FROM dwh.fact_fly
+                                FROM vayora_dw.fact_fly
                                 """).fetchone()
 
         logger.info(f"Total flights        : {stats[0]:,}")
@@ -166,8 +166,8 @@ def validate_fact_fly(db_conn):
         # Checking referential integrity
         unknown_pilots = db_conn.execute("""
                                         SELECT COUNT(*)
-                                        FROM dwh.fact_fly ff
-                                        LEFT JOIN dwh.dim_pilot dp ON ff.fact_fly_pilot = dp.dim_pilot_bk
+                                        FROM vayora_dw.fact_fly ff
+                                        LEFT JOIN vayora_dw.dim_pilot dp ON ff.fact_fly_pilot = dp.dim_pilot_bk
                                         WHERE dp.dim_pilot_bk IS NULL
                                         """).fetchone()[0]
 
@@ -178,8 +178,8 @@ def validate_fact_fly(db_conn):
 
         unknown_takeoffs = db_conn.execute("""
                                           SELECT COUNT(*)
-                                          FROM dwh.fact_fly ff
-                                          LEFT JOIN dwh.dim_takeoff dt ON ff.fact_fly_takeoff = dt.dim_takeoff_sk
+                                          FROM vayora_dw.fact_fly ff
+                                          LEFT JOIN vayora_dw.dim_takeoff dt ON ff.fact_fly_takeoff = dt.dim_takeoff_sk
                                           WHERE dt.dim_takeoff_sk IS NULL
                                           """).fetchone()[0]
 
@@ -190,8 +190,8 @@ def validate_fact_fly(db_conn):
 
         unknown_weather = db_conn.execute("""
                                          SELECT COUNT(*)
-                                         FROM dwh.fact_fly ff
-                                         LEFT JOIN dwh.dim_weather dw ON ff.fact_fly_weather = dw.dim_weather_sk
+                                         FROM vayora_dw.fact_fly ff
+                                         LEFT JOIN vayora_dw.dim_weather dw ON ff.fact_fly_weather = dw.dim_weather_sk
                                          WHERE dw.dim_weather_sk IS NULL
                                          """).fetchone()[0]
 
@@ -203,12 +203,12 @@ def validate_fact_fly(db_conn):
         # Check metrics
         invalid_distances = db_conn.execute("""
                                             SELECT COUNT(*)
-                                            FROM dwh.fact_fly
+                                            FROM vayora_dw.fact_fly
                                             WHERE fact_fly_distance <= 0
                                             """).fetchone()[0]
 
         if invalid_distances > 0:
-            logger.warning(f"{invalid_distances} vols avec distance <= 0 !")
+            logger.warning(f"{invalid_distances} flight with distance <= 0 !")
         else:
             logger.info("Distances : OK")
 
@@ -216,7 +216,7 @@ def validate_fact_fly(db_conn):
         duplicates = db_conn.execute("""
                                      SELECT COUNT(*)
                                      FROM (SELECT fact_fly_bk, COUNT(*) as cnt
-                                           FROM dwh.fact_fly
+                                           FROM vayora_dw.fact_fly
                                            GROUP BY fact_fly_bk
                                            HAVING COUNT(*) > 1) AS subq
                                      """).fetchone()[0]
@@ -249,9 +249,9 @@ def get_rejected_flights(db_conn):
                                          SELECT count(*), count(distinct(vp.pilot_number))                                                
                                          FROM vayora.flight vf
                                          INNER JOIN vayora.pilot vp ON vp.pilot_id = vf.flight_pilot_id
-                                         LEFT JOIN dwh.dim_pilot dp ON vp.pilot_number = dp.dim_pilot_bk
+                                         LEFT JOIN vayora_dw.dim_pilot dp ON vp.pilot_number = dp.dim_pilot_bk
                                          WHERE dp.dim_pilot_bk IS NULL AND NOT EXISTS (SELECT 1
-                                                                                       FROM dwh.fact_fly ff
+                                                                                       FROM vayora_dw.fact_fly ff
                                                                                        WHERE ff.fact_fly_bk = vf.flight_id)
                                          """).fetchone()
 
@@ -260,9 +260,9 @@ def get_rejected_flights(db_conn):
                                            SELECT count(*), count(distinct(vt.takeoff_name))
                                            FROM vayora.flight vf
                                            INNER JOIN vayora.takeoff vt ON vf.flight_takeoff_id = vt.takeoff_id
-                                           LEFT JOIN dwh.dim_takeoff dt ON vt.takeoff_name = dt.dim_takeoff_name
+                                           LEFT JOIN vayora_dw.dim_takeoff dt ON vt.takeoff_name = dt.dim_takeoff_name
                                            WHERE dt.dim_takeoff_sk IS NULL AND NOT EXISTS (SELECT 1
-                                                                                           FROM dwh.fact_fly ff
+                                                                                           FROM vayora_dw.fact_fly ff
                                                                                            WHERE ff.fact_fly_bk = vf.flight_id)
                                            """).fetchone()
 
@@ -270,7 +270,7 @@ def get_rejected_flights(db_conn):
         missing_weather = db_conn.execute("""SELECT COUNT(*) 
                                              FROM vayora.flight vf 
                                              INNER JOIN vayora.takeoff vt ON vf.flight_takeoff_id = vt.takeoff_id 
-                                             ANTI JOIN forecast.weather fw ON fw.weather_date = vf.flight_starttime AND fw.weather_place = vt.takeoff_name 
+                                             ANTI JOIN weather.weather_hisoric fw ON fw.weather_date = vf.flight_starttime AND fw.weather_place = vt.takeoff_name 
                                           """).fetchone()[0]
 
         logger.info(f"Flights rejected - Pilot unknown     : number of lines rejected : {missing_pilots[0]}   - number of distinct pilots  : {missing_pilots[1]}")

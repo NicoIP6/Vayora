@@ -1,12 +1,9 @@
 import pandas as pd
-from flask import Flask, render_template, request, redirect, url_for, flash, session, Blueprint, send_file
-from flask_login import login_user, logout_user, login_required, current_user
-from application.set_up import Setup
-from application.extensions import db, bcrypt, login_manager
-from db.oltp_models import *
-from db.dwh_models import *
+from flask import render_template, redirect, url_for, flash, Blueprint, send_file
+from flask_login import login_required
 from sqlalchemy.orm import joinedload
 import io
+from shared.database_file.dwh_models import *
 
 
 analytics = Blueprint('analytics', __name__)
