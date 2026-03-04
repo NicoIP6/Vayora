@@ -35,7 +35,7 @@ jobs:
       - name: Dry Run Build
         run: |
           docker build -t test-web -f ./vayora-app.dockerfile .
-          docker build -t test-weather -f ./weather-app.dokerfile .
+          docker build -t test-weather -f ./weather-app.dockerfile .
 
       # 4. Login au Registry (nécessaire pour le push ensuite)
       - name: Login to GHCR
