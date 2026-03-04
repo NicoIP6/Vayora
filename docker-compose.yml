@@ -1,0 +1,60 @@
+services:
+  db_postgres:
+    image: postgres:17.6-alpine3.22
+    container_name: vayora_db
+    shm_size: 400mb
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /pgdata
+
+    volumes:
+      - /media/nico/DB/postgresfile:/pgdata
+      - /media/nico/DB:/data
+    networks:
+      - vayora_network
+
+  flask_app:
+    image: vayora_user_app:V0.0.4
+    container_name: vayora_app
+    restart: always
+    depends_on:
+      - ${DB_HOST}
+    ports:
+      - "8000:8000"
+    environment:
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        POSTGRES_DB: ${POSTGRES_DB}
+        POSTGRES_STG: ${POSTGRES_STG}
+        POSTGRES_DW: ${POSTGRES_DW}
+        DB_HOST: ${DB_HOST}
+        DB_PORT: ${DB_PORT}
+    networks:
+      - vayora_network
+networks:
+    vayora_network:
+#
+#  weather_job:
+#    image: vayora_get_weather:V0.0.2
+#    depends_on:
+#      - ${DB_HOST}
+#    environment:
+#      POSTGRES_USER: ${POSTGRES_USER}
+#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+#      POSTGRES_DB: ${POSTGRES_DB}
+#      POSTGRES_STG: ${POSTGRES_STG}
+#      POSTGRES_DW: ${POSTGRES_DW}
+#      DB_HOST: ${DB_HOST}
+#      DB_PORT: ${DB_PORT}
+#    networks:
+#      - vayora_network
+#
+
+#
