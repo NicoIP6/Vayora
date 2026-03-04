@@ -1,12 +1,39 @@
-name: CI/CD
+name: CI/CD Vayora
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "test"] # Change en "prod" si c'est le nom de ta branche finale
 
 jobs:
-  build-and-deploy:
+  build-and-test:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ÉTAPE DRY RUN : On vérifie si les Dockerfiles compilent
+      - name: Dry Run Build
+        run: |
+          docker build -t test-web -f ./vayora-app.dockerfile .
+          docker build -t test-weather -f ./weather-app.dokerfile .
+
+      # Si on est sur 'test', on peut s'arrêter là ou tester la config sur le serveur
+      - name: Config Check on VPS (Dry Run)
+        if: github.ref == 'refs/heads/test'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/vayora
+            # Cette commande vérifie la syntaxe du YAML et les variables d'env
+            docker compose config -q && echo "La configuration Docker Compose est valide !"
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout code
@@ -19,14 +46,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/ml-api:latest ./api
+      # 1. Build & Push de l'application Web (Flask)
+      - name: Build and push Web App
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./vayora-app.dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/vayora-app:latest
+            ghcr.io/${{ github.repository_owner }}/vayora-app:${{ steps.vars.outputs.sha_short }}
 
-      - name: Push Docker image
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/ml-api:latest
+      # 2. Build & Push du Weather Collector
+      - name: Build and push Weather App
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./weather-app.dokerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/vayora-weather:latest
+            ghcr.io/${{ github.repository_owner }}/vayora-weather:${{ steps.vars.outputs.sha_short }}
 
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -34,8 +79,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /srv/ml-api
-            git pull
-            docker-compose pull
-            docker-compose up -d
-            docker system prune -f
+            cd /opt/vayora
+            # On ne fait plus de git pull, Docker Compose s'occupe de tout avec les images
+            docker compose pull
+            docker compose up -d
+            docker image prune -f
