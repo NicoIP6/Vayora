@@ -2,74 +2,78 @@ name: CI/CD Vayora
 
 on:
   push:
-    branches: ["main", "test"] # Change en "prod" si c'est le nom de ta branche finale
+    branches: ["main", "test"]
 
 jobs:
+  # PREMIER JOB : Vérification et Build (toujours exécuté)
   build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      owner_lc: ${{ steps.owner.outputs.owner_lc }}
+      sha_short: ${{ steps.vars.outputs.sha_short }}
+    
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # ÉTAPE DRY RUN : On vérifie si les Dockerfiles compilent
+      # 1. Force le nom du repo en minuscules pour Docker
+      - name: Set lower case owner name
+        id: owner
+        run: echo "owner_lc=${OWNER,,}" >> $GITHUB_OUTPUT
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      # 2. Génère le SHA court pour le taggage
+      - name: Set short git commit SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      # 3. DRY RUN : On vérifie que les Dockerfiles compilent sans erreur
       - name: Dry Run Build
         run: |
           docker build -t test-web -f ./vayora-app.dockerfile .
           docker build -t test-weather -f ./weather-app.dokerfile .
 
-      # Si on est sur 'test', on peut s'arrêter là ou tester la config sur le serveur
-      - name: Config Check on VPS (Dry Run)
-        if: github.ref == 'refs/heads/test'
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd /opt/vayora
-            # Cette commande vérifie la syntaxe du YAML et les variables d'env
-            docker compose config -q && echo "La configuration Docker Compose est valide !"
-
-  build-and-push:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Login to GitHub Container Registry
+      # 4. Login au Registry (nécessaire pour le push ensuite)
+      - name: Login to GHCR
+        if: github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 1. Build & Push de l'application Web (Flask)
+      # 5. Build & Push de l'app Web (UNIQUEMENT SUR MAIN)
       - name: Build and push Web App
+        if: github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./vayora-app.dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/vayora-app:latest
-            ghcr.io/${{ github.repository_owner }}/vayora-app:${{ steps.vars.outputs.sha_short }}
+            ghcr.io/${{ steps.owner.outputs.owner_lc }}/vayora-app:latest
+            ghcr.io/${{ steps.owner.outputs.owner_lc }}/vayora-app:${{ steps.vars.outputs.sha_short }}
 
-      # 2. Build & Push du Weather Collector
+      # 6. Build & Push du Weather Collector (UNIQUEMENT SUR MAIN)
       - name: Build and push Weather App
+        if: github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./weather-app.dokerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/vayora-weather:latest
-            ghcr.io/${{ github.repository_owner }}/vayora-weather:${{ steps.vars.outputs.sha_short }}
+            ghcr.io/${{ steps.owner.outputs.owner_lc }}/vayora-weather:latest
+            ghcr.io/${{ steps.owner.outputs.owner_lc }}/vayora-weather:${{ steps.vars.outputs.sha_short }}
 
+  # DEUXIÈME JOB : Déploiement (UNIQUEMENT SUR MAIN)
   deploy:
-    needs: build-and-push
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to server via SSH
@@ -80,7 +84,22 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /opt/vayora
-            # On ne fait plus de git pull, Docker Compose s'occupe de tout avec les images
             docker compose pull
             docker compose up -d
             docker image prune -f
+
+  # TROISIÈME JOB : Check de config sur le VPS (UNIQUEMENT SUR TEST)
+  config-check-vps:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/test'
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH Config Check
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/vayora
+            docker compose config -q && echo "La configuration Docker Compose est valide !"
