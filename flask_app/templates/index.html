@@ -9,7 +9,7 @@
 {% block content %}
     <div class="header">
         <h1>Flight Statistics Dashboard</h1>
-        <a href="{{ url_for('logout') }}" class="btn btn-logout">Logout</a>
+        <a href="{{ url_for('login_bp.logout') }}" class="btn btn-logout">Logout</a>
     </div>
 
     {% with messages = get_flashed_messages() %}

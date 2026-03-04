@@ -1,10 +1,10 @@
-from application.extensions import db
+from shared.database_file.extensions import db
 
 # Mostly generated with sqlacodegen --> pip install sqlacodegen --> sqlacodegen postgresql://user:password@localhost:5432/db_name --outfile models.py       
 
 class DimDate(db.Model):
     __tablename__ = 'dim_date'
-    __bind_key__ = "dw"
+    __bind_key__ = "vayora_dw"
 
     date_key = db.Column(db.Integer, primary_key=True)
     full_date = db.Column(db.Date, nullable=False)
@@ -25,7 +25,7 @@ class DimDate(db.Model):
 
 class DimPilot(db.Model):
     __tablename__ = 'dim_pilot'
-    __bind_key__ = "dw"
+    __bind_key__ = "vayora_dw"
     __table_args__ = (
         db.UniqueConstraint('dim_pilot_bk', name='dim_pilot_dim_pilot_bk_key'),
     )
@@ -37,7 +37,7 @@ class DimPilot(db.Model):
 
 class DimTakeoff(db.Model):
     __tablename__ = 'dim_takeoff'
-    __bind_key__ = "dw"
+    __bind_key__ = "vayora_dw"
     __table_args__ = (
         db.UniqueConstraint('dim_takeoff_bk', name='dim_takeoff_dim_takeoff_bk_key'),
     )
@@ -49,7 +49,7 @@ class DimTakeoff(db.Model):
 
 class DimTime(db.Model):
     __tablename__ = 'dim_time'
-    __bind_key__ = "dw"
+    __bind_key__ = "vayora_dw"
 
     time_key = db.Column(db.Integer, primary_key=True)
     full_time = db.Column(db.Time, nullable=False)
@@ -60,7 +60,7 @@ class DimTime(db.Model):
 
 class DimWeather(db.Model):
     __tablename__ = 'dim_weather'
-    __bind_key__ = "dw"
+    __bind_key__ = "vayora_dw"
     __table_args__ = (
         db.UniqueConstraint('dim_weather_bk', name='dim_weather_dim_weather_bk_key'),
     )
@@ -130,7 +130,7 @@ class DimWeather(db.Model):
 
 class FactFly(db.Model):
     __tablename__ = 'fact_fly'
-    __bind_key__ = "dw"
+    __bind_key__ = "vayora_dw"
     __table_args__ = (
         db.ForeignKeyConstraint(['fact_fly_pilot'], ['dim_pilot.dim_pilot_sk'], name='fact_fly_fact_fly_pilot_fkey'),
         db.ForeignKeyConstraint(['fact_fly_start_date'], ['dim_date.date_key'], name='fact_fly_fact_fly_start_date_fkey'),
