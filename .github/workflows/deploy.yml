@@ -2,9 +2,33 @@ name: CI/CD Vayora
 
 on:
   push:
-    branches: ["main"] # Change en "prod" si c'est le nom de ta branche finale
+    branches: ["main", "test"] # Change en "prod" si c'est le nom de ta branche finale
 
 jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ÉTAPE DRY RUN : On vérifie si les Dockerfiles compilent
+      - name: Dry Run Build
+        run: |
+          docker build -t test-web -f ./vayora-app.dockerfile .
+          docker build -t test-weather -f ./weather-app.dokerfile .
+
+      # Si on est sur 'test', on peut s'arrêter là ou tester la config sur le serveur
+      - name: Config Check on VPS (Dry Run)
+        if: github.ref == 'refs/heads/test'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/vayora
+            # Cette commande vérifie la syntaxe du YAML et les variables d'env
+            docker compose config -q && echo "La configuration Docker Compose est valide !"
+
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
