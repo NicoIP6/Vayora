@@ -1,8 +1,9 @@
-from shared.database_file.extensions import db, bcrypt, login_manager
+from shared.database_file.extensions import db, login_manager
 from flask_login import UserMixin
 from sqlalchemy.dialects.postgresql import TIMESTAMP
+from flask_bcrypt import Bcrypt
 
-
+bcrypt = Bcrypt()
 @login_manager.user_loader
 def load_user(user_id):
     return Pilot.query.get(int(user_id))

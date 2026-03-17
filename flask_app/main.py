@@ -4,7 +4,7 @@ from shared.database_file.set_up import Setup
 from flask_app.statistics import analytics
 from flask_app.login_flask import login_bp
 from flask_app.registering import registering_bp
-from shared.database_file.oltp_models import Weatherforecast, login_manager, db, bcrypt
+from shared.database_file.oltp_models import Weatherforecast, login_manager, db, bcrypt, Pilot
 from datetime import datetime, time, date as date_type
 import random
 from sqlalchemy import text

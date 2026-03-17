@@ -22,9 +22,9 @@ logging.basicConfig(
 
 postgres_conn = Setup.get_duckdb_conn()
 
-fill_dim_pilot(postgres_conn)
-fill_dim_takeoff(postgres_conn)
-fill_dim_weather(postgres_conn)
+# fill_dim_pilot(postgres_conn)
+# fill_dim_takeoff(postgres_conn)
+# fill_dim_weather(postgres_conn)
 result = fill_fact_flight(postgres_conn)
 
 print(f"\n{'=' * 70}")
