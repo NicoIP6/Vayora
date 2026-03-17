@@ -1,13 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}Login - Flight Analytics{% endblock %}
+{% block title %}Connexion – Flight Analytics{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
 
 {% block content %}
-    <h2>Welcome Back</h2>
-    
+<div class="auth-wrap">
+<div class="auth-card">
+    <div class="auth-logo">
+        <div class="plane">✈</div>
+        <h2>Connexion</h2>
+        <p>Bienvenue, identifiez-vous pour accéder à votre dashboard.</p>
+    </div>
+
     {% with messages = get_flashed_messages() %}
         {% if messages %}
-            <div class="flash-messages">
+            <div class="flashes" style="margin-bottom:1rem;">
                 {% for message in messages %}
                     <div class="flash flash-error">{{ message }}</div>
                 {% endfor %}
@@ -15,11 +25,22 @@
         {% endif %}
     {% endwith %}
 
-    <form method="POST">
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit" class="btn btn-primary">Login</button>
+    <form method="POST" class="auth-form">
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" name="email" id="email" placeholder="pilote@example.com" required autofocus>
+        </div>
+        <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" name="password" id="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Se connecter →</button>
     </form>
 
-    <p>Not yet registered? <a href="{{ url_for('registering_bp.register') }}" class="text-link">Create an account</a></p>
+    <div class="auth-footer">
+        Pas encore inscrit ?
+        <a href="{{ url_for('registering_bp.register') }}">Créer un compte</a>
+    </div>
+</div>
+</div>
 {% endblock %}

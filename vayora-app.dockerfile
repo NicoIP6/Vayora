@@ -28,13 +28,10 @@ RUN pip install --upgrade pip \
 # Copier le code ET les fichiers de migration
 COPY shared ./shared
 COPY flask_app ./flask_app
-COPY migrations ./migrations
-COPY alembic.ini .
 
 # AJOUT : Copier le script de démarrage (entrypoint)
 # On verra le contenu de ce script juste après
-COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh
+
 
 # Changer ownership
 RUN chown -R appuser:appgroup /app
@@ -43,5 +40,4 @@ USER appuser
 
 EXPOSE 8000
 
-# MODIFICATION : On utilise le script entrypoint au lieu de Gunicorn direct
-ENTRYPOINT ["./entrypoint.sh"]
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "app:app"]
