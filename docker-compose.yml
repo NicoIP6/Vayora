@@ -1,45 +1,53 @@
 services:
   db_postgres:
-    image: postgres:17.6-alpine3.22
+    image: postgres:17.2-alpine # Utilisation d'une version stable alpine
     container_name: vayora_db
+    restart: always
     shm_size: 400mb
     deploy:
       resources:
         limits:
           memory: 2g
+    # SÉCURITÉ : On retire l'exposition des ports sur l'IP publique. 
+    # La DB n'est accessible que par l'app à l'intérieur du network Docker.
+    expose:
+      - "5432"
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      PGDATA: /pgdata
-
+      # On définit la DB par défaut (souvent nécessaire pour l'initialisation)
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - /media/nico/DB/postgresfile:/pgdata
-      - /media/nico/DB:/data
+      # On utilise un chemin local au projet sur le VPS ou un volume Docker nommé
+      - ./db:/docker-entrypoint-initdb.d
+      - ./postgres_data:/var/lib/postgresql/data
     networks:
       - vayora_network
 
   flask_app:
-    image: vayora_user_app:V0.0.4
+    # On utilise ton image du registre GHCR
+    image: ghcr.io/nicoip6/vayora-app:latest
     container_name: vayora_app
     restart: always
     depends_on:
       - ${DB_HOST}
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
-        POSTGRES_USER: ${POSTGRES_USER}
-        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-        POSTGRES_DB: ${POSTGRES_DB}
-        POSTGRES_STG: ${POSTGRES_STG}
-        POSTGRES_DW: ${POSTGRES_DW}
-        DB_HOST: ${DB_HOST}
-        DB_PORT: ${DB_PORT}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
     networks:
       - vayora_network
+
 networks:
-    vayora_network:
+  vayora_network:
+    driver: bridge
+
 #
 #  weather_job:
 #    image: vayora_get_weather:V0.0.2
