@@ -8,13 +8,13 @@ class Setup:
     """
 
     SECRET_KEY = os.getenv("SECRET_KEY", "secret")
-    PASSWORD = os.getenv("POSTGRES_PASSWORD")
-    USERNAME = os.getenv("POSTGRES_USER")
+    PASSWORD = os.getenv("POSTGRES_PASSWORD", 'ri3en-qui-n-Echappe')
+    USERNAME = os.getenv("POSTGRES_USER", 'nico')
     DB_OLTP_NAME = os.getenv("POSTGRES_DB", "vayora")
     DB_OLAP_NAME = os.getenv("POSTGRES_DW", "vayora_dw")
     DB_WEATHER_NAME = os.getenv("POSTGRES_STG", "vayora_weather")
 
-    DB_HOST = os.getenv("DB_HOST", "vayora_db")
+    DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_PORT = os.getenv("DB_PORT", "5432")
 
     SQLALCHEMY_DATABASE_URI = (
