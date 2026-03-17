@@ -1,102 +1,178 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Flight Analytics{% endblock %}
+{% block title %}Dashboard – Flight Analytics{% endblock %}
 
 {% block extra_head %}
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 {% endblock %}
 
 {% block content %}
-    <div class="header">
-        <h1>Flight Statistics Dashboard</h1>
-        <a href="{{ url_for('login_bp.logout') }}" class="btn btn-logout">Logout</a>
+
+<!-- En-tête pilote -->
+<div class="pilot-header">
+    <div class="pilot-avatar">
+        {{ current_user.pilot_firstname[0] | upper }}{{ current_user.pilot_lastname[0] | upper }}
     </div>
-
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for message in messages %}
-                    <div class="flash flash-success">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <div id="plot"></div>
-
-    <div class="actions">
+    <div class="pilot-info">
+        <h1>{{ current_user.pilot_firstname }} {{ current_user.pilot_lastname }}</h1>
+        <p>Pilote n° {{ current_user.pilot_number }} &nbsp;·&nbsp; {{ total_flights }} vol{{ 's' if total_flights > 1 }}</p>
+    </div>
+    <div class="pilot-actions">
         <a href="{{ url_for('analytics.download_csv', pilot_number=request.view_args.pilot_number) }}"
-           class="btn btn-success">
-           📊 Download CSV Report
-        </a>
+           class="btn btn-success">📊 Exporter CSV</a>
     </div>
+</div>
 
-    <script>
-        var data = [{
-            x: {{ seasons | tojson | safe }},
-            y: {{ distances | tojson | safe }},
-            type: 'bar',
-            marker: {
-                color: 'rgba(102, 126, 234, 0.8)',
-                line: {
-                    color: 'rgba(102, 126, 234, 1)',
-                    width: 2
-                }
-            },
-            hovertemplate: '<b>%{x}</b><br>Distance: %{y} km<extra></extra>'
-        }];
+<!-- Statistiques globales -->
+<div class="stat-section-title">📈 Statistiques globales</div>
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total vols</div>
+        <div class="stat-value">{{ total_flights }}</div>
+        <div class="stat-icon">✈</div>
+    </div>
+    <div class="stat-card accent">
+        <div class="stat-label">Distance totale</div>
+        <div class="stat-value">{{ total_distance }}<span class="stat-unit"> km</span></div>
+        <div class="stat-icon">🗺</div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-label">Meilleure distance</div>
+        <div class="stat-value">{{ max_distance }}<span class="stat-unit"> km</span></div>
+        <div class="stat-icon">🏆</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Distance moyenne</div>
+        <div class="stat-value">{{ mean_distance }}<span class="stat-unit"> km</span></div>
+        <div class="stat-icon">📐</div>
+    </div>
+    <div class="stat-card sky-dark">
+        <div class="stat-label">Temps total en l'air</div>
+        <div class="stat-value" style="font-size:1.35rem">{{ total_airtime }}</div>
+        <div class="stat-icon">⏱</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Meilleure saison</div>
+        <div class="stat-value" style="font-size:1.2rem">{{ best_season or '—' }}</div>
+        <div class="stat-icon">🌤</div>
+    </div>
+</div>
 
-        var layout = {
-            title: {
-                text: 'Total Distance per Season',
-                font: {
-                    size: 20,
-                    color: '#333',
-                    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto'
-                }
-            },
-            xaxis: {
-                title: {
-                    text: 'Season',
-                    font: {
-                        size: 14,
-                        color: '#666'
-                    }
-                },
-                tickfont: {
-                    size: 12,
-                    color: '#666'
-                }
-            },
-            yaxis: {
-                title: {
-                    text: 'Total Distance (km)',
-                    font: {
-                        size: 14,
-                        color: '#666'
-                    }
-                },
-                tickfont: {
-                    size: 12,
-                    color: '#666'
-                }
-            },
-            plot_bgcolor: '#f9fafb',
-            paper_bgcolor: 'white',
-            margin: {
-                l: 60,
-                r: 40,
-                t: 60,
-                b: 60
-            },
-            hovermode: 'closest'
-        };
+<!-- Graphiques -->
+<div class="stat-section-title">📊 Graphiques</div>
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Distance par saison</h3>
+        <div id="plot-season"></div>
+    </div>
+    <div class="chart-card">
+        <h3>Vols par année</h3>
+        {# ⚠️ years_labels et flights_per_year : à calculer dans la route Python
+           df.groupby(df["date"].dt.year) etc. ou depuis dim_date.year #}
+        <div id="plot-year"></div>
+    </div>
+    <div class="chart-card">
+        <h3>Heures de vol par année</h3>
+        {# ⚠️ hours_per_year : somme des airtimes groupés par année #}
+        <div id="plot-hours"></div>
+    </div>
+    <div class="chart-card">
+        <h3>Distance max par déco</h3>
+        {# ⚠️ takeoff_names et takeoff_max_dist :
+           df.groupby("takeoff")["distance"].max() — à calculer dans la route #}
+        <div id="plot-takeoff"></div>
+    </div>
+</div>
 
-        var config = {
-            responsive: true,
-            displayModeBar: false
-        };
+<!-- Tableau des vols -->
+<div class="stat-section-title">📋 Détail des vols</div>
+<div class="card">
+    <div class="data-table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Décollage</th>
+                    <th>Distance (km)</th>
+                    <th>Temps en l'air</th>
+                    <th>Saison</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# ⚠️ flights_rows : liste de dicts passée depuis la route
+                   avec les clés date, takeoff, distance, airtime, season
+                   Exemple dans statistics.py :
+                       flights_rows = [{"date": ..., "takeoff": ..., ...} for f in flights]
+                #}
+                {% for row in flights_rows %}
+                <tr>
+                    {# ⚠️ Adapter le format de date selon votre modèle dim_date.full_date #}
+                    <td>{{ row.date.strftime('%d/%m/%Y') if row.date else '—' }}</td>
+                    <td>{{ row.takeoff }}</td>
+                    <td>{{ row.distance }}</td>
+                    {# ⚠️ row.airtime est un objet time → formater ici ou dans Python #}
+                    <td>{{ '%dh%02d' % (row.airtime.hour, row.airtime.minute) if row.airtime else '—' }}</td>
+                    <td>{{ row.season }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem;">Aucun vol trouvé.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
-        Plotly.newPlot('plot', data, layout, config);
-    </script>
+<script>
+const COLORS = {
+    bar:  'rgba(26, 107, 181, 0.8)',
+    line: 'rgba(240, 165, 0, 0.9)',
+    bar2: 'rgba(16, 185, 129, 0.8)',
+    bar3: 'rgba(15, 74, 128, 0.8)',
+};
+
+const cfg = { responsive: true, displayModeBar: false };
+
+// --- 1. Distance / Saison ---
+Plotly.newPlot('plot-season', [{
+    x: {{ seasons | tojson | safe }},
+    y: {{ distances | tojson | safe }},
+    type: 'bar',
+    marker: { color: COLORS.bar }
+}], { margin: { l: 45, r: 15, t: 10, b: 45 }, showlegend: false }, cfg);
+
+// --- 2. Vols par année ---
+Plotly.newPlot('plot-year', [{
+    x: {{ years_labels | tojson | safe }},
+    y: {{ flights_per_year | tojson | safe }},
+    type: 'bar',
+    marker: { color: COLORS.bar2 }
+}], { margin: { l: 45, r: 15, t: 10, b: 45 }, xaxis : {type: 'category'}, showlegend: false }, cfg);
+
+// --- 3. Heures de vol par année ---
+Plotly.newPlot('plot-hours', [{
+    x: {{ years_labels | tojson | safe }},
+    y: {{ hours_per_year | tojson | safe }},
+    type: 'scatter',
+    mode: 'lines+markers',
+    line: { color: COLORS.line, width: 2.5 }
+}], { margin: { l: 45, r: 15, t: 10, b: 45 }, xaxis : {type: 'category'}, showlegend: false }, cfg);
+
+// --- 4. Distance max par décollage (Le problématique) ---
+// On vérifie en console si les données arrivent bien
+console.log("Décos:", {{ takeoff_names | tojson | safe }});
+
+Plotly.newPlot('plot-takeoff', [{
+    x: {{ takeoff_max_dist | tojson | safe }},
+    y: {{ takeoff_names | tojson | safe }},
+    type: 'bar',
+    orientation: 'h',
+    marker: { color: COLORS.bar3 }
+}], {
+    margin: { l: 150, r: 20, t: 10, b: 45 }, // Marge large pour les noms à gauche
+    showlegend: false,
+    yaxis: { automargin: true }
+}, cfg);
+</script>
+
 {% endblock %}

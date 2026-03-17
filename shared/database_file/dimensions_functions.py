@@ -2,9 +2,7 @@ import logging
 from datetime import datetime as dt
 
 
-logging.basicConfig(filename='../logging/dwh.log', level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 def fill_dim_pilot(db_conn):
     """
@@ -16,7 +14,7 @@ def fill_dim_pilot(db_conn):
     formated_time = time_use.strftime("%d-%m-%Y %H:%M:%S")
     db_conn.execute("BEGIN TRANSACTION")
     try:
-        req = """SELECT vp.pilot_number, vp.pilot_maxdistance
+        req = """SELECT vp.pilot_number, vp.pilot_maxdistance, vp.pilot_birthday
                   FROM vayora.pilot vp
                   WHERE vp.pilot_number NOT IN (SELECT dim_pilot_bk FROM vayora_dw.dim_pilot)
                 """
@@ -24,7 +22,7 @@ def fill_dim_pilot(db_conn):
         count_req = f"SELECT COUNT(*) AS n FROM ({req})"
         rows_to_insert = db_conn.execute(count_req).fetchone()[0]
 
-        db_conn.execute(f"INSERT INTO vayora_dw.dim_pilot (dim_pilot_bk, dim_pilot_maxdistance) {req}")
+        db_conn.execute(f"INSERT INTO vayora_dw.dim_pilot (dim_pilot_bk, dim_pilot_maxdistance, dim_pilot_birthdate) {req}")
 
         db_conn.commit()
 
@@ -52,8 +50,10 @@ def fill_dim_takeoff(db_conn):
     db_conn.execute("BEGIN TRANSACTION")
 
     try:
-        req = """SELECT vt.takeoff_id, vt.takeoff_name
+        req = """SELECT vt.takeoff_id, vt.takeoff_name, vc.country_code, vt.takeoff_latitude, vt.takeoff_longitude, vt.takeoff_type
                   FROM vayora.takeoff vt
+                  JOIN vayora.address va ON va.address_id = vt.takeoff_id
+                  JOIN vayora.country vc ON va.address_country_id = vc.country_id
                   WHERE vt.takeoff_id NOT IN (SELECT dim_takeoff_bk FROM vayora_dw.dim_takeoff) 
                 """
 
@@ -61,7 +61,12 @@ def fill_dim_takeoff(db_conn):
 
         rows_to_insert = db_conn.execute(count_req).fetchone()[0]
 
-        db_conn.execute(f"INSERT INTO vayora_dw.dim_takeoff (dim_takeoff_bk, dim_takeoff_name) {req}")
+        db_conn.execute(f"""INSERT INTO vayora_dw.dim_takeoff (dim_takeoff_bk, 
+                                                               dim_takeoff_name, 
+                                                               dim_takeoff_country,
+                                                               dim_takeoff_latitude,
+                                                               dim_takeoff_longitude,
+                                                               dim_takeoff_type) {req}""")
         db_conn.commit()
 
         rows_inserted = rows_to_insert - db_conn.execute(count_req).fetchone()[0]
