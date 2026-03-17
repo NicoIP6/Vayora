@@ -13,7 +13,7 @@ jobs:
     outputs:
       owner_lc: ${{ steps.owner.outputs.owner_lc }}
       sha_short: ${{ steps.vars.outputs.sha_short }}
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
