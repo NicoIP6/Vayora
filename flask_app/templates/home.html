@@ -1,72 +1,219 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Flight Analytics{% endblock %}
+{% block title %}Accueil – Flight Analytics{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="header">
-    <h1>🌤️ Flight Weather Analytics</h1>
 
-    <div class="actions">
-        {% if current_user.is_authenticated %}
-            <a href="{{ url_for('analytics.index') }}" class="btn btn-success">
-                Dashboard
-            </a>
-            <a href="{{ url_for('login_bp.logout') }}" class="btn btn-logout">
-                Logout
-            </a>
-        {% else %}
-            <a href="{{ url_for('login_bp.login') }}" class="btn btn-primary">
-                Login
-            </a>
+<!-- Héro -->
+<div class="hero">
+    <div>
+        <h1>✈ Vayora Analytics</h1>
+        <p>Conditions météo en altitude pour les pilotes de parapente</p>
+    </div>
+    {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('login_bp.login') }}" class="btn btn-accent">Se connecter →</a>
+    {% endif %}
+</div>
+
+<!-- Section météo -->
+<div class="card">
+    <div class="weather-header">
+        <h2>Météo du jour</h2>
+        {% if weather %}
+            <span class="badge">
+                📍 {{ weather.weather_place }} &nbsp;·&nbsp;
+                {{ weather.weather_date.strftime('%d/%m/%Y %H:%M') }}
+            </span>
         {% endif %}
     </div>
+
+    <form method="GET" action="{{ url_for('home') }}" class="weather-controls">
+        <div class="form-group">
+            <label for="place">📍 Lieu</label>
+            <select name="place" id="place" onchange="this.form.submit()">
+                <option value="">— Aléatoire —</option>
+                {% for loc in locations %}
+                    <option value="{{ loc.name }}"
+                        {{ 'selected' if selected_place == loc.name }}>
+                        {{ loc.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="date">📅 Date</label>
+            <input type="date" name="date" id="date" value="{{ selected_date or '' }}"
+                   onchange="this.form.submit()"
+                   style="padding:.65rem .9rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:.9rem;">
+        </div>
+        <button type="submit" class="btn btn-outline">🔄 Rafraîchir</button>
+    </form>
+
+    {% if weather %}
+    <div class="weather-grid">
+        <div class="weather-metric">
+            <div class="metric-icon">💧</div>
+            <div class="metric-label">Temperature</div>
+            <div class="metric-value">{{ weather.temperature_120m }}<span class="metric-unit"> C°</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌧</div>
+            <div class="metric-label">Précipitations</div>
+            <div class="metric-value">{{ weather.precipitation_probability }}<span class="metric-unit"> %</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌧</div>
+            <div class="metric-label">Couverture Nuageuse</div>
+            <div class="metric-value">{{ weather.cloud_cover }}<span class="metric-unit"> %</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🔽</div>
+            <div class="metric-label">Vitesse du vent</div>
+            <div class="metric-value">{{ weather.wind_speed_120m }}<span class="metric-unit"> km/h</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🔽</div>
+            <div class="metric-label">Direction du vent</div>
+            <div class="metric-value">{{ weather.wind_direction_120m }}<span class="metric-unit"> °</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌧</div>
+            <div class="metric-label">Humidité Relative</div>
+            <div class="metric-value">{{ weather.relative_humidity_950hpa }}<span class="metric-unit"> %</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌡</div>
+            <div class="metric-label">Pression MSL</div>
+            <div class="metric-value">{{ weather.pressure_msl }}<span class="metric-unit"> hpa</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌡</div>
+            <div class="metric-label">Pression</div>
+            <div class="metric-value">{{ weather.surface_pressure }}<span class="metric-unit"> hpa</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">💨</div>
+            <div class="metric-label">CAPE</div>
+            <div class="metric-value">{{ weather.cape }}<span class="metric-unit"> J/Kg</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🧭</div>
+            <div class="metric-label">Plafond</div>
+            <div class="metric-value">{{ weather.boundary_layer_height }}<span class="metric-unit"> m</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">☁️</div>
+            <div class="metric-label">Indice de soulèvement</div>
+            <div class="metric-value">{{ weather.lifted_index }}<span class="metric-unit"> C°</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">📊</div>
+            <div class="metric-label">Inhibition Convective</div>
+            <div class="metric-value">{{ weather.convective_inhibition }}<span class="metric-unit"> J/Kg</span></div>
+        </div>
+    </div>
+    {% else %}
+    <div class="no-data">
+        <div class="no-data-icon">🌫</div>
+        <p>Aucune donnée météo disponible pour ce filtre.</p>
+    </div>
+    {% endif %}
 </div>
 
-<h2>Weather Forecast for Today</h2>
+{% if current_user.is_authenticated %}
+<div class="card ai-section">
+    <div class="ai-header">
+        <h2>🤖 Prédiction IA — Sites volables</h2>
+        <span class="badge-ai">✨ Powered by ML</span>
+    </div>
 
-{% if weather %}
-<div style="overflow-x:auto;">
-    <table style="
-        width: 100%;
-        border-collapse: collapse;
-        border-radius: 8px;
-        overflow: hidden;
-        font-size: 14px;
-    ">
-        <thead style="background: #f5f7fa;">
-            <tr>
-                <th style="padding: 12px; text-align:left;">Date</th>
-                <th style="padding: 12px; text-align:left;">Location</th>
-                <th style="padding: 12px; text-align:left;">Humidity (%)</th>
-                <th style="padding: 12px; text-align:left;">Precipitation (mm)</th>
-                <th style="padding: 12px; text-align:left;">Pressure MSL (hPa)</th>
-                <th style="padding: 12px; text-align:left;">Surface Pressure (hPa)</th>
-                <th style="padding: 12px; text-align:left;">Cloud Cover (%)</th>
-                <th style="padding: 12px; text-align:left;">Wind Speed 180m (km/h)</th>
-                <th style="padding: 12px; text-align:left;">Wind Direction 180m (°)</th>
-                <th style="padding: 12px; text-align:left;">Temperature 180m (°C)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr style="border-top: 1px solid #e5e7eb;">
-                <td style="padding: 12px;">{{ weather.weather_date.strftime('%Y-%m-%d %H:%M') }}</td>
-                <td style="padding: 12px;">{{ weather.weather_place }}</td>
-                <td style="padding: 12px;">{{ weather.relative_humidity_2m }}</td>
-                <td style="padding: 12px;">{{ weather.precipitation }}</td>
-                <td style="padding: 12px;">{{ weather.pressure_msl }}</td>
-                <td style="padding: 12px;">{{ weather.surface_pressure }}</td>
-                <td style="padding: 12px;">{{ weather.cloud_cover_high }}</td>
-                <td style="padding: 12px;">{{ weather.wind_speed_180m }}</td>
-                <td style="padding: 12px;">{{ weather.wind_direction_180m }}</td>
-                <td style="padding: 12px;">{{ weather.temperature_180m }}</td>
-            </tr>
-        </tbody>
-    </table>
+    <form method="GET" action="{{ url_for('home') }}" class="ai-controls">
+        {# Conserver les filtres météo dans l'URL #}
+        {% if selected_place %}<input type="hidden" name="place" value="{{ selected_place }}">{% endif %}
+        {% if selected_date  %}<input type="hidden" name="date"  value="{{ selected_date  }}">{% endif %}
+
+        <div class="form-group">
+            <label for="ai_date">📅 Date de prédiction</label>
+            <input type="date" name="ai_date" id="ai_date"
+                   value="{{ selected_ai_date or '' }}"
+                   onchange="this.form.submit()"
+                   style="padding:.65rem .9rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:.9rem;">
+        </div>
+        <div class="form-group">
+            <label for="ai_place">📍 Lieu (optionnel)</label>
+            <select name="ai_place" id="ai_place" onchange="this.form.submit()">
+                <option value="">— Tous les sites —</option>
+                {% for loc in locations %}
+                    <option value="{{ loc.name }}"
+                        {{ 'selected' if selected_ai_place == loc.name }}>
+                        {{ loc.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-outline">🔄 Actualiser</button>
+    </form>
+
+    {% if predictions %}
+        <div class="prediction-table-wrap">
+            <table class="prediction-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Site de décollage</th>
+                        <th>Score vol</th>
+                        <th>Vent 120 m</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pred in predictions %}
+                    <tr>
+                        <td class="rank-cell">
+                            {% if loop.index == 1 %}🥇
+                            {% elif loop.index == 2 %}🥈
+                            {% elif loop.index == 3 %}🥉
+                            {% else %}{{ loop.index }}
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ pred.weather_place }}</strong></td>
+                        <td>
+                            <span class="score-pill
+                                {% if pred.score_vol >= 75 %}score-high
+                                {% elif pred.score_vol >= 50 %}score-medium
+                                {% else %}score-low{% endif %}">
+                                {{ pred.score_vol }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="wind-cell">💨 {{ pred.wind_speed_120m }} km/h</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="prediction-count">
+            {{ predictions | length }} site{{ 's' if predictions | length > 1 }} volable{{ 's' if predictions | length > 1 }} —
+            <strong>{{ selected_ai_date }}</strong>
+            {% if selected_ai_place %} · <strong>{{ selected_ai_place }}</strong>{% endif %}
+        </p>
+    {% else %}
+        <div class="no-data">
+            <div class="no-data-icon">🪂</div>
+            <p>
+                {% if selected_ai_date %}
+                    Aucun site volable prédit pour cette date{% if selected_ai_place %} et ce lieu{% endif %}.
+                {% else %}
+                    Sélectionnez une date pour afficher les prédictions IA.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
 </div>
-{% else %}
-    <p style="margin-top:20px; color:#999;">
-        No weather data available for today.
-    </p>
 {% endif %}
 
 {% endblock %}

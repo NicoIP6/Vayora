@@ -1,5 +1,7 @@
 import json
 from flask import Flask
+from shared.database_file.extensions import *
+from shared.database_file.oltp_models import *
 
 
 def fill_db():
@@ -49,7 +51,7 @@ def fill_db():
     db.session.commit()
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:passwordfortest@localhost:5432/vayora'
+
 db.init_app(app)
 
 with app.app_context():

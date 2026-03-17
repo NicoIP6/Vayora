@@ -15,8 +15,7 @@ COLUMN_RULES = {
     r'wind.?dir|wdir|direction|deg': (0.0, 360.0),
     r'dewpoint|dew': (-60.0, 60.0),
     r'precip|rain|rainfall': (0.0, 500.0),
-    r'snow': (0.0, 200.0),
-    r'geopotential': (100, 2500)
+    r'snow': (0.0, 200.0)
 }
 
 def get_integer_digit_count(val, valid_range):
@@ -111,43 +110,53 @@ def insert_weather(db_name: str, table_name: str, df: pd.DataFrame, db_connectio
         return 1
 
 if __name__ == "__main__":
-
+    print("start fill weather")
     conn = Setup.get_duckdb_conn()
 
     takeoffs = conn.execute("SELECT tkf.takeoff_name FROM vayora.takeoff tkf").fetchall()
     raw = [i[0] for i in takeoffs]
-
-    path = '../data/Weather_Data/Open-Meteo/'
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    path = BASE_DIR / "data" / "Weather_Data" / "open-meteo"
     table_created = False
+    weather_place = conn.execute("SELECT wth.weather_place FROM weather.weather_historic wth").fetchall()
+    alr_exist = [i[0] for i in weather_place]
 
-    for tkf in raw:
+    try:
+        for tkf in raw:
 
-        file = Path(f"{path}{tkf}.csv")
+            print(f"building path : {tkf}\n")
+            file = path / f"{tkf}.csv"
 
-        if file.exists():
+            if file.exists() and tkf not in alr_exist:
 
-            print(50 * '-')
-            print(f"Loading {tkf}")
-            print(21 * '-' + " start " + 22 * '-')
-            file_str = str(file).replace("'", "''")
-            tkf_escaped = tkf.replace("'", "''")
+                print(50 * '-')
+                print(f"Loading {tkf}")
+                print(21 * '-' + " start " + 22 * '-' + "\n")
+                file_str = str(file).replace("'", "''")
+                tkf_escaped = tkf.replace("'", "''")
 
-            temp = conn.execute(f"""
-                SELECT
-                    CAST(CAST(date AS TIMESTAMPTZ) AT TIME ZONE 'UTC' AS TIMESTAMP) AS weather_date,
-                    * EXCLUDE (date),
-                    '{tkf_escaped}' AS weather_place
-                FROM read_csv_auto('{file_str}', 
-                                    header=True,
-                                    types={{'date': 'VARCHAR'}})
-                WHERE date IS NOT NULL
-                  AND CAST(date AS VARCHAR) != '0'
-            """).df()
+                temp = conn.execute(f"""
+                    SELECT
+                        CAST(CAST(date AS TIMESTAMPTZ) AT TIME ZONE 'UTC' AS TIMESTAMP) AS weather_date,
+                        * EXCLUDE (date),
+                        '{tkf_escaped}' AS weather_place
+                    FROM read_csv_auto('{file_str}', 
+                                        header=True,
+                                        types={{'date': 'VARCHAR'}})
+                    WHERE date IS NOT NULL
+                      AND CAST(date AS VARCHAR) != '0'
+                """).df()
 
-            temp.columns = (
-                temp.columns
-                .str.replace('"', '')
-                .str.strip()
-                .str.lower()
-            )
-            insert_weather("weather", "weather_historic", temp, conn)
+                temp.columns = (
+                    temp.columns
+                    .str.replace('"', '')
+                    .str.strip()
+                    .str.lower()
+                )
+                insert_weather("weather", "weather_historic", temp, conn)
+            else:
+                print("\n" + 50 * '-')
+                print(f"file for {tkf} not found or {tkf} already exist")
+                print(50 * '-')
+    except Exception as e:
+        print(f"Error: {e} occured")

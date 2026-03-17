@@ -5,9 +5,8 @@ from flask_app.statistics import analytics
 from flask_app.login_flask import login_bp
 from flask_app.registering import registering_bp
 from shared.database_file.oltp_models import Weatherforecast, login_manager, db, bcrypt
-from datetime import datetime, time, date as date_type
+from datetime import datetime, time
 import random
-from sqlalchemy import text
 
 
 def create_app():
@@ -22,7 +21,8 @@ def create_app():
 
     @app.route("/")
     def home():
-        # ── Lieux distincts pour les sélecteurs ─────────────────────────────
+        # ── Récupérer les lieux distincts pour le sélecteur ─────────────────
+
         raw_places = (
             db.session.query(Weatherforecast.weather_place)
             .distinct()
@@ -31,43 +31,43 @@ def create_app():
         )
         locations = [{"name": row[0]} for row in raw_places]
 
-        # ── Filtres météo (section du haut) ─────────────────────────────────
+        # ── Lire les filtres GET ─────────────────────────────────────────────
         selected_place = request.args.get("place", "").strip()
-        selected_date  = request.args.get("date",  "").strip()
+        selected_date  = request.args.get("date", "").strip()
 
-        # ── Requête météo ────────────────────────────────────────────────────
+        # ── Construire la requête météo ──────────────────────────────────────
         query = db.session.query(Weatherforecast).with_entities(
+            # ⚠️ Adapter : liste des colonnes à afficher selon votre modèle Weatherforecast
             Weatherforecast.weather_date,
             Weatherforecast.weather_place,
             Weatherforecast.temperature_120m,
-            Weatherforecast.precipitation_probability,
-            Weatherforecast.cloud_cover,
-            Weatherforecast.relative_humidity_950hpa,
+            Weatherforecast.precipitation,
             Weatherforecast.pressure_msl,
-            Weatherforecast.surface_pressure,
             Weatherforecast.cape,
             Weatherforecast.boundary_layer_height,
             Weatherforecast.lifted_index,
             Weatherforecast.convective_inhibition,
-            Weatherforecast.wind_speed_120m,
-            Weatherforecast.wind_direction_120m
+            Weatherforecast.wind_speed_120m
         )
 
         if selected_place:
+
             query = query.filter(Weatherforecast.weather_place == selected_place)
 
         if selected_date:
             try:
-                target    = datetime.strptime(selected_date, "%Y-%m-%d").date()
+                target = datetime.strptime(selected_date, "%Y-%m-%d").date()
                 day_start = datetime.combine(target, time.min)
                 day_end   = datetime.combine(target, time.max)
+                # ⚠️ Adapter : Weatherforecast.weather_date selon votre modèle
                 query = query.filter(
                     Weatherforecast.weather_date >= day_start,
                     Weatherforecast.weather_date <= day_end,
                 )
             except ValueError:
-                pass
+                pass  # date invalide → on ignore le filtre
         else:
+            # Pas de filtre date : on prend aujourd'hui
             today_start = datetime.combine(datetime.now().date(), time.min)
             today_end   = datetime.combine(datetime.now().date(), time.max)
             query = query.filter(
@@ -76,41 +76,20 @@ def create_app():
             )
 
         forecasts = query.all()
-        weather = forecasts[-1] if (selected_place and forecasts) else (
-            random.choice(forecasts) if forecasts else None
-        )
 
-        # ── Prédictions IA (section du bas, utilisateurs connectés) ─────────
-        predictions       = []
-        selected_ai_date  = request.args.get("ai_date",  "").strip()
-        selected_ai_place = request.args.get("ai_place", "").strip()
+        # Si lieu sélectionné → on prend le plus récent ; sinon aléatoire
+        if selected_place and forecasts:
 
-        if current_user.is_authenticated and selected_ai_date:
-            try:
-                datetime.strptime(selected_ai_date, "%Y-%m-%d")  # validation
-                place_filter = f"AND weather_place = '{selected_ai_place}'" if selected_ai_place else ""
-                sql = f"""
-                    SELECT weather_place, score_vol, wind_speed_120m
-                    FROM predictions_flight
-                    WHERE date_jour = '{selected_ai_date}'
-                      AND is_flyable = True
-                      {place_filter}
-                    ORDER BY score_vol DESC
-                """
-                result = db.session.execute(text(sql))
-                predictions = result.fetchall()
-            except ValueError:
-                pass
+            weather = forecasts[-1]
+        else:
+            weather = random.choice(forecasts) if forecasts else None
 
         return render_template(
             "home.html",
-            weather           = weather,
-            locations         = locations,
-            selected_place    = selected_place,
-            selected_date     = selected_date,
-            predictions       = predictions,
-            selected_ai_date  = selected_ai_date,
-            selected_ai_place = selected_ai_place,
+            weather        = weather,
+            locations      = locations,
+            selected_place = selected_place,
+            selected_date  = selected_date,
         )
 
     app.register_blueprint(analytics)
