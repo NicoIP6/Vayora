@@ -16,7 +16,7 @@ def _to_decimal_hours(t):
     return t.hour + t.minute / 60
 
 
-def _build_df(pilot_id):
+def _build_df(pilot_number):
     flights = (
         db.session.query(FactFlight)
         .options(
@@ -25,7 +25,7 @@ def _build_df(pilot_id):
             joinedload(FactFlight.dim_pilot),
             joinedload(FactFlight.dim_takeoff)
         )
-        .filter(FactFlight.fact_flight_pilot == pilot_id)
+        .filter(FactFlight.fact_flight_pilot == pilot_number)
         .all()
     )
 
@@ -56,7 +56,8 @@ def index(pilot_number):
         flash("Pilote introuvable", "error")
         return redirect(url_for("home"))
 
-    pilot_id = pilot.dim_pilot_bk
+    pilot_id = pilot.dim_pilot_sk
+    print(pilot_id)
     df = _build_df(pilot_id)
 
     if df.empty:

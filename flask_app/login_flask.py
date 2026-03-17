@@ -16,6 +16,15 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             return redirect(url_for("analytics.index", pilot_number=user.pilot_number))
+        # À mettre temporairement dans la route login après avoir récupéré 'user'
+        if user and not user.check_password(password):
+            # On ré-encode en direct pour tester si c'était un problème de vieux hash
+            print(f"Tentative de réparation pour {user.pilot_email}")
+            user.set_password(str(user.pilot_number).strip())
+            db.session.commit()
+            # On ré-essaie tout de suite
+            if user.check_password(password):
+                print("Réparation réussie !")
         else:
             flash("Invalid username or password")
             return redirect(url_for("login_bp.login"))
