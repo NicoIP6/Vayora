@@ -14,7 +14,7 @@ with psql_oltp.connect() as conn:
 
 inspector = inspect(psql_weather)
 columns_db = [col["name"] for col in inspector.get_columns("weather")]
-path = '../data/Weather_Data/Open-Meteo/'
+path = '../data/Weather_Data/Open-Meteo_old/'
 
 for tkf in raw:
 

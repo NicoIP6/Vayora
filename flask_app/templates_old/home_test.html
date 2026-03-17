@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil – Flight Analytics{% endblock %}
+
+{% block extra_head %}
+<style>
+    .hero {
+        background: linear-gradient(135deg, var(--sky-dark) 0%, var(--sky) 100%);
+        border-radius: 14px;
+        padding: 2.5rem 2rem;
+        color: #fff;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    .hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.9rem; font-weight: 600; margin-bottom: .4rem; }
+    .hero p  { opacity: .8; font-size: .95rem; }
+
+    /* Weather controls */
+    .weather-controls {
+        display: flex;
+        align-items: flex-end;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+    }
+    .weather-controls .form-group { min-width: 180px; }
+    .weather-controls select { background: var(--surface); }
+
+    /* Weather card grid */
+    .weather-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1rem;
+        margin-top: 1.25rem;
+    }
+    .weather-metric {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+    }
+    .weather-metric .metric-icon { font-size: 1.4rem; margin-bottom: .4rem; }
+    .weather-metric .metric-label { font-size: .75rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
+    .weather-metric .metric-value { font-size: 1.4rem; font-weight: 600; color: var(--text); }
+    .weather-metric .metric-unit  { font-size: .8rem; color: var(--text-muted); }
+
+    .weather-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-bottom: .5rem;
+    }
+    .weather-header h2 { font-size: 1.2rem; }
+    .badge {
+        display: inline-flex; align-items: center; gap: .3rem;
+        background: var(--sky-light); color: var(--sky-dark);
+        font-size: .8rem; font-weight: 500;
+        padding: .25rem .75rem; border-radius: 20px;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-muted);
+        font-size: .95rem;
+    }
+    .no-data .no-data-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Héro -->
+<div class="hero">
+    <div>
+        <h1>✈ Flight Weather Analytics</h1>
+        <p>Conditions météo en altitude pour les pilotes de parapente</p>
+    </div>
+    {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('login_bp.login') }}" class="btn btn-accent">Se connecter →</a>
+    {% endif %}
+</div>
+
+<!-- Section météo -->
+<div class="card">
+    <div class="weather-header">
+        <h2>Météo du jour</h2>
+        {% if weather %}
+            <span class="badge">
+                📍 {{ weather.weather_place }} &nbsp;·&nbsp;
+                {# ⚠️ Adapter : weather.weather_date.strftime selon votre format de date #}
+                {{ weather.weather_date.strftime('%d/%m/%Y %H:%M') }}
+            </span>
+        {% endif %}
+    </div>
+
+    <!-- Sélecteur de lieu et date -->
+    {# ⚠️ Adapter : 'locations' est une liste de dict {'id': ..., 'name': ...}
+       à construire dans votre route home() depuis Weatherforecast.weather_place distinct.
+       Exemple dans main.py :
+           locations = db.session.query(Weatherforecast.weather_place).distinct().all()
+           locations = [{'name': l[0]} for l in locations]
+    #}
+    <form method="GET" action="{{ url_for('home') }}" class="weather-controls">
+        <div class="form-group">
+            <label for="place">📍 Lieu</label>
+            <select name="place" id="place" onchange="this.form.submit()">
+                <option value="">— Aléatoire —</option>
+                {% for loc in locations %}
+                    <option value="{{ loc.name }}"
+                        {{ 'selected' if selected_place == loc.name }}>
+                        {{ loc.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="date">📅 Date</label>
+            <input type="date" name="date" id="date" value="{{ selected_date or '' }}"
+                   onchange="this.form.submit()"
+                   style="padding:.65rem .9rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:.9rem;">
+        </div>
+        <button type="submit" class="btn btn-outline">🔄 Rafraîchir</button>
+    </form>
+
+    {% if weather %}
+    <div class="weather-grid">
+        <div class="weather-metric">
+            <div class="metric-icon">💧</div>
+            <div class="metric-label">Temperature</div>
+            
+            <div class="metric-value">{{ weather.temperature_120m }}<span class="metric-unit"> %</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌧</div>
+            <div class="metric-label">Précipitations</div>
+            {# ⚠️ Adapter : weather.precipitation #}
+            <div class="metric-value">{{ weather.precipitation }}<span class="metric-unit"> mm</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌡</div>
+            <div class="metric-label">Pressure MSL</div>
+            {# ⚠️ Adapter : weather.temperature_180m #}
+            <div class="metric-value">{{ weather.pressure_msl }}<span class="metric-unit"> °C</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">💨</div>
+            <div class="metric-label">CAPE</div>
+            {# ⚠️ Adapter : weather.wind_speed_180m #}
+            <div class="metric-value">{{ weather.cape }}<span class="metric-unit"> km/h</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🧭</div>
+            <div class="metric-label">boundary layer height</div>
+            <div class="metric-value">{{ weather.boundary_layer_height }}<span class="metric-unit"> °</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">☁️</div>
+            <div class="metric-label">Lifted Index</div>
+            {# ⚠️ Adapter : weather.cloud_cover_high #}
+            <div class="metric-value">{{ weather.lifted_index }}<span class="metric-unit"> %</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">📊</div>
+            <div class="metric-label">Convective Inhibition</div>
+            {# ⚠️ Adapter : weather.pressure_msl #}
+            <div class="metric-value">{{ weather.convective_inhibition }}<span class="metric-unit"> hPa</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🔽</div>
+            <div class="metric-label">Wind Speed</div>
+            {# ⚠️ Adapter : weather.surface_pressure #}
+            <div class="metric-value">{{ weather.wind_speed_120m }}<span class="metric-unit"> hPa</span></div>
+        </div>
+    </div>
+    {% else %}
+    <div class="no-data">
+        <div class="no-data-icon">🌫</div>
+        <p>Aucune donnée météo disponible pour ce filtre.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

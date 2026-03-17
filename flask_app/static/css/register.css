@@ -1,0 +1,43 @@
+.auth-wrap {
+    min-height: calc(100vh - 64px - 4rem);
+    display: flex; align-items: center; justify-content: center;
+}
+.auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2.5rem 2.25rem;
+    width: 100%; max-width: 460px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.07);
+}
+.auth-logo { text-align: center; margin-bottom: 1.75rem; }
+.auth-logo .plane { font-size: 2rem; }
+.auth-logo h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 600; margin-top: .4rem; }
+.auth-logo p  { color: var(--text-muted); font-size: .875rem; margin-top: .25rem; }
+.auth-form { display: flex; flex-direction: column; gap: .9rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.auth-footer { text-align: center; margin-top: 1.25rem; font-size: .875rem; color: var(--text-muted); }
+.auth-footer a { color: var(--sky); font-weight: 500; text-decoration: none; }
+.auth-footer a:hover { text-decoration: underline; }
+.btn-block { width: 100%; justify-content: center; padding: .75rem; font-size: .95rem; margin-top: .25rem; }.auth-wrap {
+    min-height: calc(100vh - 64px - 4rem);
+    display: flex; align-items: center; justify-content: center;
+}
+.auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2.5rem 2.25rem;
+    width: 100%; max-width: 460px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.07);
+}
+.auth-logo { text-align: center; margin-bottom: 1.75rem; }
+.auth-logo .plane { font-size: 2rem; }
+.auth-logo h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 600; margin-top: .4rem; }
+.auth-logo p  { color: var(--text-muted); font-size: .875rem; margin-top: .25rem; }
+.auth-form { display: flex; flex-direction: column; gap: .9rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.auth-footer { text-align: center; margin-top: 1.25rem; font-size: .875rem; color: var(--text-muted); }
+.auth-footer a { color: var(--sky); font-weight: 500; text-decoration: none; }
+.auth-footer a:hover { text-decoration: underline; }
+.btn-block { width: 100%; justify-content: center; padding: .75rem; font-size: .95rem; margin-top: .25rem; }
