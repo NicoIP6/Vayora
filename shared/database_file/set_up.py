@@ -10,12 +10,12 @@ class Setup:
     SECRET_KEY = os.getenv("SECRET_KEY", "secret")
     PASSWORD = os.getenv("POSTGRES_PASSWORD")
     USERNAME = os.getenv("POSTGRES_USER")
-    DB_OLTP_NAME = os.getenv("POSTGRES_DB")
-    DB_OLAP_NAME = os.getenv("POSTGRES_DW")
-    DB_WEATHER_NAME = os.getenv("POSTGRES_STG")
+    DB_OLTP_NAME = os.getenv("POSTGRES_DB", "vayora")
+    DB_OLAP_NAME = os.getenv("POSTGRES_DW", "vayora_dw")
+    DB_WEATHER_NAME = os.getenv("POSTGRES_STG", "vayora_weather")
 
-    DB_HOST = os.getenv("DB_HOST")
-    DB_PORT = os.getenv("DB_PORT")
+    DB_HOST = os.getenv("DB_HOST", "vayora_db")
+    DB_PORT = os.getenv("DB_PORT", "5432")
 
     SQLALCHEMY_DATABASE_URI = (
         f"postgresql://{USERNAME}:{PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_OLTP_NAME}"
