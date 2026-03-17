@@ -14,6 +14,6 @@ RUN pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 COPY shared ./shared
-COPY weather ./weather
+COPY ml_models ./ml_models
 
-CMD ["python", "weather/forecast.py"]
+CMD ["python", "ml_models/predict_flight.py"]
