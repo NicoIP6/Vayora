@@ -24,6 +24,12 @@ orientations = joblib.load(ORIENTATION_PATH)
 
 
 def get_angle_diff(a, b):
+    """
+
+    :param a: the daily wind direction
+    :param b: the takeoff's reference direction
+    :return:
+    """
     diff = np.abs(a - b)
     return np.where(diff > 180, 360 - diff, diff)
 
@@ -46,7 +52,7 @@ def run_predictions():
 
     df_daily = df_forecast.groupby(['weather_place', 'date_jour']).median(numeric_only=True).reset_index()
 
-    # 4. Feature Engineering (Calcul de l'écart au vent)
+
     df_daily['deco_orientation_ref'] = df_daily['weather_place'].map(orientations)
     df_daily['wind_diff_ref'] = get_angle_diff(
         df_daily['wind_direction_120m'],
