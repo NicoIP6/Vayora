@@ -114,8 +114,7 @@ class Weatherforecast(db.Model):
     weather_place = db.Column(db.String(150), nullable=False)
     temperature_2m = db.Column(db.Numeric(6, 2))
     boundary_layer_height = db.Column(db.Integer)
-    lifted_index = db.Column(db.Numeric(4,
-                                        2))  # atmospheric instability measurement in C°. 'LI > 0' = weak storm risk even null LI < -6 = huge instability and violent storm risk
+    lifted_index = db.Column(db.Numeric(4, 2))  # atmospheric instability measurement in C°. 'LI > 0' = weak storm risk even null LI < -6 = huge instability and violent storm risk
     convective_inhibition = db.Column(db.Integer)
     cloud_cover = db.Column(db.Numeric(6, 2))
     cloud_cover_low = db.Column(db.Numeric(6, 2))
