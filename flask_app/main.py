@@ -14,6 +14,7 @@ from bokeh.server.server import Server
 from dashboard.dashboard import create_dashboard
 from bokeh.embed import server_document
 import os
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 def dashboard_app(doc):
@@ -51,7 +52,7 @@ if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not os.environ.get("FLASK_EN
 
 def create_app():
     app = Flask(__name__)
-
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
     app.config.from_object(Setup)
     db.init_app(app)
     bcrypt.init_app(app)
@@ -116,4 +117,4 @@ def create_app():
 
 app = create_app()
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
