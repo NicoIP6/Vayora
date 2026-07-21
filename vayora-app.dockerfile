@@ -35,8 +35,10 @@ COPY dashboard ./dashboard
 
 
 # Changer ownership
-RUN chown -R appuser:appgroup /app
-
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup --home /home/appuser --shell /bin/false appuser \
+    && mkdir -p /home/appuser \
+    && chown -R appuser:appgroup /home/appuser
+ENV HOME=/home/appuser
 USER appuser
 
 EXPOSE 8000
