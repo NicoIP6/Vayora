@@ -12,116 +12,73 @@
 <div class="hero">
     <div>
         <h1>✈ Vayora Analytics</h1>
-        <p>Conditions météo en altitude pour les pilotes de parapente</p>
+        <p>Weather intelligence beyond the forecast</p>
     </div>
     {% if not current_user.is_authenticated %}
-        <a href="{{ url_for('login_bp.login') }}" class="btn btn-accent">Se connecter →</a>
+        <a href="{{ url_for('login_bp.login') }}" class="btn btn-accent">Login →</a>
     {% endif %}
 </div>
 
 <!-- Section météo -->
 <div class="card">
-    <div class="weather-header">
-        <h2>Météo du jour</h2>
-        {% if weather %}
-            <span class="badge">
-                📍 {{ weather.weather_place }} &nbsp;·&nbsp;
-                {{ weather.weather_date.strftime('%d/%m/%Y %H:%M') }}
-            </span>
-        {% endif %}
-    </div>
+    <div class="weather-card">
+        <div class="weather-header">
+            <h2>Daily weather</h2>
+            {% if weather %}
+                <span class="badge">
+                    📍 {{ weather.weather_place }} &nbsp;·&nbsp;
+                    {{ weather.weather_date.strftime('%d/%m/%Y %H:%M') }}
+                </span>
+            {% endif %}
+        </div>
 
-    <form method="GET" action="{{ url_for('home') }}" class="weather-controls">
+        <form class="weather-controls">
         <div class="form-group">
             <label for="place">📍 Lieu</label>
-            <select name="place" id="place" onchange="this.form.submit()">
+            <select name="place" id="place">
                 <option value="">— Aléatoire —</option>
                 {% for loc in locations %}
-                    <option value="{{ loc.name }}"
-                        {{ 'selected' if selected_place == loc.name }}>
-                        {{ loc.name }}
-                    </option>
+                    <option value="{{ loc.name }}"> {{ 'selected' if selected_place == loc.name }}>{{ loc.name }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="form-group">
             <label for="date">📅 Date</label>
-            <input type="date" name="date" id="date" value="{{ selected_date or '' }}"
-                   onchange="this.form.submit()"
-                   style="padding:.65rem .9rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:.9rem;">
+            <input type="date" name="date" id="date" value="{{ selected_date or '' }}">
         </div>
-        <button type="submit" class="btn btn-outline">🔄 Rafraîchir</button>
-    </form>
+        </form>
 
-    {% if weather %}
-    <div class="weather-grid">
-        <div class="weather-metric">
-            <div class="metric-icon">💧</div>
-            <div class="metric-label">Temperature</div>
-            <div class="metric-value">{{ weather.temperature_120m }}<span class="metric-unit"> C°</span></div>
+        <!-- C'est ICI que JavaScript va injecter la nouvelle grille -->
+        <div id="weather-container">
+            {% include 'partials/weather_grid.html' %}
         </div>
-        <div class="weather-metric">
-            <div class="metric-icon">🌧</div>
-            <div class="metric-label">Précipitations</div>
-            <div class="metric-value">{{ weather.precipitation_probability }}<span class="metric-unit"> %</span></div>
-        </div>
-        <div class="weather-metric">
-            <div class="metric-icon">🌧</div>
-            <div class="metric-label">Couverture Nuageuse</div>
-            <div class="metric-value">{{ weather.cloud_cover }}<span class="metric-unit"> %</span></div>
-        </div>
-        <div class="weather-metric">
-            <div class="metric-icon">🔽</div>
-            <div class="metric-label">Vitesse du vent</div>
-            <div class="metric-value">{{ weather.wind_speed_120m }}<span class="metric-unit"> km/h</span></div>
-        </div>
-        <div class="weather-metric">
-            <div class="metric-icon">🔽</div>
-            <div class="metric-label">Direction du vent</div>
-            <div class="metric-value">{{ weather.wind_direction_120m }}<span class="metric-unit"> °</span></div>
-        </div>
-        <div class="weather-metric">
-            <div class="metric-icon">🌧</div>
-            <div class="metric-label">Humidité Relative</div>
-            <div class="metric-value">{{ weather.relative_humidity_950hpa }}<span class="metric-unit"> %</span></div>
-        </div>
-        <div class="weather-metric">
-            <div class="metric-icon">🌡</div>
-            <div class="metric-label">Pression MSL</div>
-            <div class="metric-value">{{ weather.pressure_msl }}<span class="metric-unit"> hpa</span></div>
-        </div>
-        <div class="weather-metric">
-            <div class="metric-icon">🌡</div>
-            <div class="metric-label">Pression</div>
-            <div class="metric-value">{{ weather.surface_pressure }}<span class="metric-unit"> hpa</span></div>
-        </div>
-        <div class="weather-metric">
-            <div class="metric-icon">💨</div>
-            <div class="metric-label">CAPE</div>
-            <div class="metric-value">{{ weather.cape }}<span class="metric-unit"> J/Kg</span></div>
-        </div>
-        <div class="weather-metric">
-            <div class="metric-icon">🧭</div>
-            <div class="metric-label">Plafond</div>
-            <div class="metric-value">{{ weather.boundary_layer_height }}<span class="metric-unit"> m</span></div>
-        </div>
-        <div class="weather-metric">
-            <div class="metric-icon">☁️</div>
-            <div class="metric-label">Indice de soulèvement</div>
-            <div class="metric-value">{{ weather.lifted_index }}<span class="metric-unit"> C°</span></div>
-        </div>
-        <div class="weather-metric">
-            <div class="metric-icon">📊</div>
-            <div class="metric-label">Inhibition Convective</div>
-            <div class="metric-value">{{ weather.convective_inhibition }}<span class="metric-unit"> J/Kg</span></div>
-        </div>
+
+        <!-- Le script qui fait la magie en arrière-plan -->
+        <script>
+            // On écoute les changements sur les inputs
+            document.getElementById('place').addEventListener('change', updateWeather);
+            document.getElementById('date').addEventListener('change', updateWeather);
+
+            function updateWeather() {
+                // 1. On récupère les valeurs
+                const place = document.getElementById('place').value;
+                const date = document.getElementById('date').value;
+
+                // Optionnel : Ajouter un effet de chargement visuel
+                document.getElementById('weather-container').style.opacity = '0.5';
+
+                // 2. On lance la requête en arrière-plan vers notre nouvelle route Flask
+                fetch(`/api/weather?place=${place}&date=${date}`)
+                    .then(response => response.text()) // On récupère le HTML renvoyé
+                    .then(html => {
+                        // 3. On remplace l'ancien HTML par le nouveau
+                        document.getElementById('weather-container').innerHTML = html;
+                        document.getElementById('weather-container').style.opacity = '1';
+                    })
+                    .catch(error => console.error('Erreur:', error));
+            }
+        </script>
     </div>
-    {% else %}
-    <div class="no-data">
-        <div class="no-data-icon">🌫</div>
-        <p>Aucune donnée météo disponible pour ce filtre.</p>
-    </div>
-    {% endif %}
 </div>
 
 {% if current_user.is_authenticated %}
@@ -148,7 +105,7 @@
             <select name="ai_place" id="ai_place" onchange="this.form.submit()">
                 <option value="">— Tous les sites —</option>
                 {% for loc in locations %}
-                    <option value="{{ loc.name }}"
+                    <option value="{{ loc.name }}">
                         {{ 'selected' if selected_ai_place == loc.name }}>
                         {{ loc.name }}
                     </option>
@@ -215,5 +172,16 @@
     {% endif %}
 </div>
 {% endif %}
+<div class="card" style="display: flex; flex-direction: column; align-items: center; width: 100%; overflow: hidden;">
 
+    <div class="weather-header" style="width: 100%;">
+        <h2>Flight Analytics</h2>
+    </div>
+
+    <!-- Conteneur restrictif et centré -->
+    <div style="width: 100%; display: flex; justify-content: center; overflow-x: auto; padding: 20px 0;">
+        {{ panel_script|safe }}
+    </div>
+
+</div>
 {% endblock %}
