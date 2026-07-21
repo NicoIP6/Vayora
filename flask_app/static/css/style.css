@@ -94,7 +94,7 @@
 
         /* ── PAGE WRAPPER ──────────────────────── */
         .page {
-            max-width: 1200px;
+            /*max-width: 1200px;*/
             margin: 0 auto;
             padding: 2rem 1.5rem;
         }
@@ -135,8 +135,11 @@
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 1.5rem;
-        }
 
+        }
+        .weather-card{
+            max-width: 1200px;
+        }
         /* ── FORM ELEMENTS ─────────────────────── */
         .form-group { display: flex; flex-direction: column; gap: .4rem; }
         label { font-size: .8125rem; font-weight: 500; color: var(--text-muted); }
