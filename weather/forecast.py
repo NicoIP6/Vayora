@@ -5,6 +5,7 @@ from retry_requests import retry
 from weather.fill_weather import insert_weather
 from shared.database_file.set_up import Setup
 from datetime import datetime as dt
+import time
 
 
 def get_forecast(lat, lng, tkf_name):
@@ -142,3 +143,4 @@ if __name__ == "__main__":
     for raw in takeoffs:
         forecast_df = get_forecast(raw[1], raw[2], raw[0])
         insert_weather('vayora', 'weather_forecast', forecast_df, conn)
+        time.sleep(100)
