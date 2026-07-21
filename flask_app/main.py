@@ -30,13 +30,16 @@ def start_embedded_bokeh():
         server = Server(
             {"/dashboard": bokeh_app},
             port=5006,
-            allow_websocket_origin=["vayora.be"],  # ton vrai domaine, pas "*" en prod
+            allow_websocket_origin=["vayora.be"], # ton vrai domaine, pas "*" en prod
+            address="0.0.0.0",
             use_xheaders=True  # important : fait confiance aux headers X-Forwarded-* d'Apache
         )
         server.start()
         server.io_loop.start()
-    except Exception:
-        pass
+    except Exception as e:
+        import traceback
+        print(f"[BOKEH ERROR] {e}", flush=True)
+        traceback.print_exc()
 
 
 # Démarrage automatique du thread
