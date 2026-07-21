@@ -28,6 +28,7 @@ RUN pip install --upgrade pip \
 # Copier le code ET les fichiers de migration
 COPY shared ./shared
 COPY flask_app ./flask_app
+COPY dashboard ./dashboard
 
 # AJOUT : Copier le script de démarrage (entrypoint)
 # On verra le contenu de ce script juste après
