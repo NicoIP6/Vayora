@@ -13,6 +13,7 @@ from threading import Thread
 from bokeh.server.server import Server
 from dashboard.dashboard import create_dashboard
 from bokeh.embed import server_document
+import os
 
 
 def dashboard_app(doc):
@@ -20,19 +21,29 @@ def dashboard_app(doc):
     panel.server_doc(doc)
 
 
-def start_bokeh_server():
+def start_embedded_bokeh():
     try:
+        def bokeh_app(doc):
+            panel = create_dashboard()
+            panel.server_doc(doc)
+
         server = Server(
-            {"/dashboard": dashboard_app},
+            {"/dashboard": bokeh_app},
             port=5006,
-            allow_websocket_origin=["localhost:5000", "127.0.0.1:5000"]
+            allow_websocket_origin=["vayora.be"],  # ton vrai domaine, pas "*" en prod
+            use_xheaders=True  # important : fait confiance aux headers X-Forwarded-* d'Apache
         )
         server.start()
         server.io_loop.start()
-    except OSError:
+    except Exception:
         pass
 
-Thread(target=start_bokeh_server, daemon=True).start()
+
+# Démarrage automatique du thread
+if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not os.environ.get("FLASK_ENV") == "development":
+    t = Thread(target=start_embedded_bokeh, daemon=True)
+    t.start()
+
 
 
 def create_app():
@@ -80,9 +91,7 @@ def create_app():
             except ValueError:
                 pass
 
-        panel_script = server_document(
-            "http://localhost:5006/dashboard"
-        )
+        panel_script = server_document(f"{request.scheme}://{request.host}/dashboard")
 
         return render_template(
             "home.html",
