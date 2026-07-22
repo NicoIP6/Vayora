@@ -33,7 +33,8 @@ def start_embedded_bokeh():
             port=5006,
             allow_websocket_origin=["vayora.be"], # ton vrai domaine, pas "*" en prod
             address="0.0.0.0",
-            use_xheaders=True  # important : fait confiance aux headers X-Forwarded-* d'Apache
+            use_xheaders=True,  # important : fait confiance aux headers X-Forwarded-* d'Apache
+            session_token_expiration = 3600
         )
         server.start()
         server.io_loop.start()

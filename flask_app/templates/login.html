@@ -12,7 +12,7 @@
     <div class="auth-logo">
         <div class="plane">✈</div>
         <h2>Connexion</h2>
-        <p>Bienvenue, identifiez-vous pour accéder à votre dashboard.</p>
+        <p>Welcome. Please log in to access your personal dashboard.</p>
     </div>
 
     {% with messages = get_flashed_messages() %}
@@ -31,15 +31,15 @@
             <input type="email" name="email" id="email" placeholder="pilote@example.com" required autofocus>
         </div>
         <div class="form-group">
-            <label for="password">Mot de passe</label>
+            <label for="password">Password</label>
             <input type="password" name="password" id="password" placeholder="••••••••" required>
         </div>
-        <button type="submit" class="btn btn-primary btn-block">Se connecter →</button>
+        <button type="submit" class="btn btn-primary btn-block">Login →</button>
     </form>
 
     <div class="auth-footer">
-        Pas encore inscrit ?
-        <a href="{{ url_for('registering_bp.register') }}">Créer un compte</a>
+        Not register yet ?
+        <a href="{{ url_for('registering_bp.register') }}">Create an account</a>
     </div>
 </div>
 </div>
