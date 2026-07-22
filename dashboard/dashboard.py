@@ -136,6 +136,11 @@ def checkbox_dropdown(name, options, value=None):
     :return: A tuple with pn.Column() which is the ready to use dropdown object,
              a checkbox which is to access to the value or attached a callback
     """
+
+    def toggle(event):
+        print(f"[TOGGLE] Clicked: {name}", flush=True)
+        panel_box.visible = not panel_box.visible
+
     if value is None:
         value = options
 
@@ -178,6 +183,7 @@ px.defaults.color_discrete_sequence = [
 ]
 
 def create_dashboard():
+    print("[CREATE_DASHBOARD] Nouvelle session créée", flush=True)
     date_range = pn.widgets.DateRangePicker(label="Date Range",
                                             value=(dt.date(2017, 1, 1), dt.date.today()),
                                             start=dt.date(2016, 1, 1)
