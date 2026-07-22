@@ -77,7 +77,7 @@ def create_yearly_bar(df):
     airtime_by_year = (
         df.groupby("year_number")
         .apply(lambda x: x["airtime_minutes"].sum() / x["flight_count"].sum())
-        .reset_index(name="avg_airtime_minutes")
+        .reset_index(names="avg_airtime_minutes")
     )
 
     df = df.copy()
