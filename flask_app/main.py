@@ -15,7 +15,12 @@ from dashboard.dashboard import create_dashboard
 from bokeh.embed import server_document
 import os
 from werkzeug.middleware.proxy_fix import ProxyFix
+import logging
 
+
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger('bokeh').setLevel(logging.DEBUG)
+logging.getLogger('tornado').setLevel(logging.DEBUG)
 
 def dashboard_app(doc):
     panel = create_dashboard()
