@@ -25,8 +25,16 @@ def dashboard_app(doc):
 def start_embedded_bokeh():
     try:
         def bokeh_app(doc):
-            panel = create_dashboard()
-            panel.server_doc(doc)
+            print("[BOKEH_APP] Début", flush=True)
+            try:
+                panel = create_dashboard()
+                print("[BOKEH_APP] create_dashboard() terminé", flush=True)
+                panel.server_doc(doc)
+                print("[BOKEH_APP] server_doc() terminé avec succès", flush=True)
+            except Exception as e:
+                import traceback
+                print(f"[BOKEH_APP ERROR] {e}", flush=True)
+                traceback.print_exc()
 
         server = Server(
             {"/dashboard": bokeh_app},
