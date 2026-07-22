@@ -28,16 +28,19 @@ RUN pip install --upgrade pip \
 # Copier le code ET les fichiers de migration
 COPY shared ./shared
 COPY flask_app ./flask_app
+COPY dashboard ./dashboard
 
 # AJOUT : Copier le script de démarrage (entrypoint)
 # On verra le contenu de ce script juste après
 
 
 # Changer ownership
-RUN chown -R appuser:appgroup /app
-
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup --home /home/appuser --shell /bin/false appuser \
+    && mkdir -p /home/appuser \
+    && chown -R appuser:appgroup /home/appuser
+ENV HOME=/home/appuser
 USER appuser
 
 EXPOSE 8000
 
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "flas_app.main:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "flask_app.main:app"]

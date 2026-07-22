@@ -11,8 +11,8 @@
 <div class="auth-card">
     <div class="auth-logo">
         <div class="plane">🪂</div>
-        <h2>Créer un compte</h2>
-        <p>Rejoignez la communauté et suivez vos performances.</p>
+        <h2>Create an account</h2>
+        <p>Join the community and track your performance.</p>
     </div>
 
     {% with messages = get_flashed_messages() %}
@@ -32,43 +32,43 @@
                    value="{{ form_data.email if form_data else '' }}" required autofocus>
         </div>
         <div class="form-group">
-            <label for="password">Mot de passe</label>
+            <label for="password">Password</label>
             <input type="password" name="password" id="password" placeholder="Minimum 8 caractères"
                    value="{{ form_data.password if form_data else '' }}" required>
         </div>
         <div class="form-group">
             {# ⚠️ Adapter : le champ pilotnumber correspond à pilot_number dans votre modèle Pilot #}
-            <label for="pilotnumber">Numéro de pilote</label>
+            <label for="pilotnumber">Pilot number</label>
             <input type="text" name="pilotnumber" id="pilotnumber" placeholder="ex. P1234"
                    value="{{ form_data.pilotnumber if form_data else '' }}" required>
         </div>
         <div class="form-row">
             <div class="form-group">
                 {# ⚠️ Adapter : name → pilot_firstname dans votre modèle Pilot #}
-                <label for="name">Prénom</label>
+                <label for="name">First name</label>
                 <input type="text" name="name" id="name" placeholder="Jean"
                        value="{{ form_data.name if form_data else '' }}" required>
             </div>
             <div class="form-group">
                 {# ⚠️ Adapter : lastname → pilot_lastname dans votre modèle Pilot #}
-                <label for="lastname">Nom</label>
+                <label for="lastname">Last name</label>
                 <input type="text" name="lastname" id="lastname" placeholder="Dupont"
                        value="{{ form_data.lastname if form_data else '' }}" required>
             </div>
         </div>
         <input type="hidden" name="update_confirm" id="updateConfirm" value="">
-        <button type="submit" class="btn btn-primary btn-block">Créer mon compte →</button>
+        <button type="submit" class="btn btn-primary btn-block">Create an account →</button>
     </form>
 
     <div class="auth-footer">
-        Déjà inscrit ? <a href="{{ url_for('login_bp.login') }}">Se connecter</a>
+        Already registered ? <a href="{{ url_for('login_bp.login') }}">Login</a>
     </div>
 </div>
 </div>
 
 {% if show_popup %}
 <script>
-    if (confirm("Le numéro pilote {{ pilotnumber }} existe déjà. Mettre à jour les informations ?")) {
+    if (confirm("Pilot number "{{ pilotnumber }}" already exists.")) {
         document.getElementById('updateConfirm').value = 'true';
     } else {
         document.getElementById('updateConfirm').value = 'false';
