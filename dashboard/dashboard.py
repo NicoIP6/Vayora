@@ -1,8 +1,6 @@
 import panel as pn
 import plotly.express as px
 import datetime as dt
-
-from scripts.fill_dwh import result
 from shared.database_file.set_up import Setup
 from dashboard.plot_builder import bar_plot, polar_plot, map_plot, pie_plot
 
