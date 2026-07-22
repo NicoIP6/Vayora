@@ -20,65 +20,65 @@
     </div>
     <div class="pilot-actions">
         <a href="{{ url_for('analytics.download_csv', pilot_number=request.view_args.pilot_number) }}"
-           class="btn btn-success">📊 Exporter CSV</a>
+           class="btn btn-success">📊 Export CSV</a>
     </div>
 </div>
 
 <!-- Statistiques globales -->
-<div class="stat-section-title">📈 Statistiques globales</div>
+<div class="stat-section-title">📈 Overall Statistics</div>
 <div class="stat-grid">
     <div class="stat-card">
-        <div class="stat-label">Total vols</div>
+        <div class="stat-label">Total Flights</div>
         <div class="stat-value">{{ total_flights }}</div>
         <div class="stat-icon">✈</div>
     </div>
     <div class="stat-card accent">
-        <div class="stat-label">Distance totale</div>
+        <div class="stat-label">Total distance</div>
         <div class="stat-value">{{ total_distance }}<span class="stat-unit"> km</span></div>
         <div class="stat-icon">🗺</div>
     </div>
     <div class="stat-card success">
-        <div class="stat-label">Meilleure distance</div>
+        <div class="stat-label">Best distance</div>
         <div class="stat-value">{{ max_distance }}<span class="stat-unit"> km</span></div>
         <div class="stat-icon">🏆</div>
     </div>
     <div class="stat-card">
-        <div class="stat-label">Distance moyenne</div>
+        <div class="stat-label">Average distance</div>
         <div class="stat-value">{{ mean_distance }}<span class="stat-unit"> km</span></div>
         <div class="stat-icon">📐</div>
     </div>
     <div class="stat-card sky-dark">
-        <div class="stat-label">Temps total en l'air</div>
+        <div class="stat-label">Total airtime</div>
         <div class="stat-value" style="font-size:1.35rem">{{ total_airtime }}</div>
         <div class="stat-icon">⏱</div>
     </div>
     <div class="stat-card">
-        <div class="stat-label">Meilleure saison</div>
+        <div class="stat-label">Best season</div>
         <div class="stat-value" style="font-size:1.2rem">{{ best_season or '—' }}</div>
         <div class="stat-icon">🌤</div>
     </div>
 </div>
 
 <!-- Graphiques -->
-<div class="stat-section-title">📊 Graphiques</div>
+<div class="stat-section-title">📊 Graph</div>
 <div class="charts-grid">
     <div class="chart-card">
-        <h3>Distance par saison</h3>
+        <h3>Distance by season</h3>
         <div id="plot-season"></div>
     </div>
     <div class="chart-card">
-        <h3>Vols par année</h3>
+        <h3>Flight by year</h3>
         {# ⚠️ years_labels et flights_per_year : à calculer dans la route Python
            df.groupby(df["date"].dt.year) etc. ou depuis dim_date.year #}
         <div id="plot-year"></div>
     </div>
     <div class="chart-card">
-        <h3>Heures de vol par année</h3>
+        <h3>Airtime by year in hours</h3>
         {# ⚠️ hours_per_year : somme des airtimes groupés par année #}
         <div id="plot-hours"></div>
     </div>
     <div class="chart-card">
-        <h3>Distance max par déco</h3>
+        <h3>Best distance by takeoff</h3>
         {# ⚠️ takeoff_names et takeoff_max_dist :
            df.groupby("takeoff")["distance"].max() — à calculer dans la route #}
         <div id="plot-takeoff"></div>
@@ -86,17 +86,17 @@
 </div>
 
 <!-- Tableau des vols -->
-<div class="stat-section-title">📋 Détail des vols</div>
+<div class="stat-section-title">📋 Flight details</div>
 <div class="card">
     <div class="data-table-wrap">
         <table>
             <thead>
                 <tr>
                     <th>Date</th>
-                    <th>Décollage</th>
+                    <th>Takeoff</th>
                     <th>Distance (km)</th>
-                    <th>Temps en l'air</th>
-                    <th>Saison</th>
+                    <th>Airtime</th>
+                    <th>Season</th>
                 </tr>
             </thead>
             <tbody>
@@ -116,7 +116,7 @@
                     <td>{{ row.season }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem;">Aucun vol trouvé.</td></tr>
+                <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem;">No flight found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

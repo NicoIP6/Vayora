@@ -1,6 +1,8 @@
 import panel as pn
 import plotly.express as px
 import datetime as dt
+
+from scripts.fill_dwh import result
 from shared.database_file.set_up import Setup
 from dashboard.plot_builder import bar_plot, polar_plot, map_plot, pie_plot
 
@@ -44,8 +46,8 @@ def get_direction_data(countries, date_ran, takeoff_type, season):
     GROUP BY wind_direction, distance_category
     ORDER BY wind_direction, distance_category
     """
-
-    return conn.execute(query, [countries, start_date, end_date, takeoff_type, season]).df()
+    result = conn.execute(query, [countries, start_date, end_date, takeoff_type, season]).df()
+    return result
 
 
 def get_year_data(countries,date_ran, takeoff_type, season):
@@ -68,7 +70,8 @@ def get_year_data(countries,date_ran, takeoff_type, season):
               AND LOWER(dd.season) IN (SELECT UNNEST(?))
             GROUP BY year_number, season
             """
-    return conn.execute(query, [countries,start_date,end_date,takeoff_type,season]).df()
+    result = conn.execute(query, [countries,start_date,end_date,takeoff_type,season]).df()
+    return result
 
 
 def create_yearly_bar(df):
@@ -120,7 +123,8 @@ def get_takeoff_data(countries, date_ran, takeoff_type, season):
               AND LOWER(dd.season) IN (SELECT UNNEST(?))
             GROUP BY dto.dim_takeoff_name, dto.dim_takeoff_latitude, dto.dim_takeoff_longitude, dto.dim_takeoff_type
             """
-    return conn.execute(query, [countries, start_date,end_date, takeoff_type, season]).df()
+    result = conn.execute(query, [countries, start_date,end_date, takeoff_type, season]).df()
+    return result
 
 
 def checkbox_dropdown(name, options, value=None):
