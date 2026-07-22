@@ -7,7 +7,7 @@ class Setup:
     Basic set up for the database_file's
     """
 
-    SECRET_KEY = os.getenv("SECRET_KEY", "secret")
+    SECRET_KEY = os.getenv("SECRET_KEY")
     PASSWORD = os.getenv("POSTGRES_PASSWORD")
     USERNAME = os.getenv("POSTGRES_USER")
     DB_OLTP_NAME = os.getenv("POSTGRES_DB", "vayora")
