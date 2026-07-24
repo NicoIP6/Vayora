@@ -118,22 +118,9 @@ def bar_plot(df:pd.DataFrame, x:str, y:str, color: str | None = None, barmode: s
 def map_plot(df: pd.DataFrame, lat: str, lon: str, hover_name: str | None = None, 
              color: str | None = None, size: str | None = None, width: int = 750, 
              height: int = 750, title: str | None = None, legend_label: str | None = None) -> go.Figure:
-    
-    """
-    
-    :param df: 
-    :param lat: 
-    :param lon: 
-    :param hover_name: 
-    :param color: 
-    :param size: 
-    :param width: 
-    :param height: 
-    :param title: 
-    :param legend_label: 
-    :return: 
-    """
-    
+
+    center = dict(lat=df[lat].mean(), lon=df[lon].mean()) if not df.empty else dict(lat=46.5, lon=2.5)
+
     fig = px.scatter_map(
         df,
         lat=lat,
@@ -143,30 +130,22 @@ def map_plot(df: pd.DataFrame, lat: str, lon: str, hover_name: str | None = None
         size=size,
         size_max=15,
         zoom=3.5,
-        width=width,
-        height=height,
+        center=center,
     )
     if title:
         fig.update_layout(
-            title=dict(
-                text=title,
-                x=0.5,
-                xanchor="center"
-            )
+            title=dict(text=title, x=0.5, xanchor="center")
         )
     if legend_label:
-        fig.update_legends(
-            title=legend_label,
-            y=0.5,
-            x=1.1
-        )
-        
-    fig.update_traces(
-        marker=dict(sizemin=5)
+        fig.update_legends(title=legend_label, y=0.5, x=1.1)
+
+    fig.update_traces(marker=dict(sizemin=5))
+
+    fig.update_layout(
+        uirevision="constant",
+        autosize=True,   # laisse le conteneur/pane gérer la taille plutôt qu'une valeur fixe
     )
 
-    fig.update_layout(uirevision="constant")
-    
     return fig
 
 
