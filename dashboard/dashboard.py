@@ -227,26 +227,20 @@ def create_dashboard():
         df = get_year_data(countries, date_ran, takeoff_type, season)
         bar_pane.object = create_yearly_bar(df)
 
-    def update_takeoff_map(countries, date_ran, takeoff_type, season, top_n):
+    def update_takeoff(countries, date_ran, takeoff_type, season):
         df = get_takeoff_data(countries, date_ran, takeoff_type, season)
-        df_top = (
-            df.sort_values("flight_count", ascending=False)
-            .groupby(["dim_takeoff_country", "dim_takeoff_type"])
-            .head(15)
-        )
         takeoff_map_pane.object = map_plot(
-            df_top,
+            df,
             lat="dim_takeoff_latitude",
             lon="dim_takeoff_longitude",
             hover_name="dim_takeoff_name",
             color="dim_takeoff_type",
             size="flight_count",
+            width=650,
+            height=650,
             title="Takeoff Traffic",
             legend_label="Takeoff Type",
         )
-
-    def update_takeoff_pie(countries, date_ran, takeoff_type, season):
-        df = get_takeoff_data(countries, date_ran, takeoff_type, season)
         takeoff_pie_pane.object = pie_plot(
             df,
             values="flight_count",
@@ -256,29 +250,6 @@ def create_dashboard():
             height=500,
             title="Takeoff type traffic"
         )
-    # def update_takeoff(countries, date_ran, takeoff_type, season):
-    #     df = get_takeoff_data(countries, date_ran, takeoff_type, season)
-    #     takeoff_map_pane.object = map_plot(
-    #         df,
-    #         lat="dim_takeoff_latitude",
-    #         lon="dim_takeoff_longitude",
-    #         hover_name="dim_takeoff_name",
-    #         color="dim_takeoff_type",
-    #         size="flight_count",
-    #         width=650,
-    #         height=650,
-    #         title="Takeoff Traffic",
-    #         legend_label="Takeoff Type",
-    #     )
-    #     takeoff_pie_pane.object = pie_plot(
-    #         df,
-    #         values="flight_count",
-    #         names="dim_takeoff_type",
-    #         color="dim_takeoff_type",
-    #         width=500,
-    #         height=500,
-    #         title="Takeoff type traffic"
-    #     )
 
     # --- Bindings réactifs : watch=True car ces fonctions ne renvoient rien,
     #     elles mettent juste à jour les panes existants en place ---
@@ -301,7 +272,7 @@ def create_dashboard():
     )
 
     pn.bind(
-        update_takeoff_pie,
+        update_takeoff,
         country_checkbox,
         date_range,
         takeoff_type_checkbox,
@@ -312,8 +283,7 @@ def create_dashboard():
     # --- Déclenche un premier calcul immédiat pour peupler les panes au chargement ---
     update_polar(country_checkbox.value, date_range.value, takeoff_type_checkbox.value, season_checkbox.value)
     update_bar(country_checkbox.value, date_range.value, takeoff_type_checkbox.value, season_checkbox.value)
-    update_takeoff_pie(country_checkbox.value, date_range.value, takeoff_type_checkbox.value, season_checkbox.value)
-
+    update_takeoff(country_checkbox.value, date_range.value, takeoff_type_checkbox.value, season_checkbox.value)
 
     sidebar = pn.Column(
         date_range,
