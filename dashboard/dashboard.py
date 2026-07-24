@@ -155,7 +155,7 @@ def checkbox_dropdown(name, options, value=None):
 
     panel_box = pn.Column(
         checkbox,
-        visible=False,
+        visible=True,
         styles={"border": "1px solid #ccc", "padding": "10px", "background": "white"}
     )
 
@@ -301,7 +301,6 @@ def create_dashboard():
         sizing_mode="fixed"
     )
 
-    # 2. Contenu principal : on le force à s'étirer en largeur
     main_content = pn.FlexBox(
         polar,
         takeoff_map,
@@ -312,7 +311,6 @@ def create_dashboard():
         sizing_mode="stretch_width"
     )
 
-    # 3. Assemblage global : étirement complet
     layout = pn.Row(
         sidebar,
         main_content,
