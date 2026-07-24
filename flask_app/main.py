@@ -81,7 +81,7 @@ def create_app():
         locations = [{"name": row[0]} for row in raw_places]
 
         selected_place = request.args.get("place", "").strip()
-        selected_date = request.args.get("date", "").strip()
+        selected_date = request.args.get("date", "").strip() or date_type.today().isoformat()
 
         predictions = []
         selected_ai_date = request.args.get("ai_date", "").strip()
