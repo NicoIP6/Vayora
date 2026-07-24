@@ -301,14 +301,6 @@ def create_dashboard():
     )
 
     pn.bind(
-        update_takeoff_map,
-        country_checkbox,
-        date_range,
-        takeoff_type_checkbox,
-        season_checkbox,
-        watch=True
-    )
-    pn.bind(
         update_takeoff_pie,
         country_checkbox,
         date_range,
@@ -320,7 +312,6 @@ def create_dashboard():
     # --- Déclenche un premier calcul immédiat pour peupler les panes au chargement ---
     update_polar(country_checkbox.value, date_range.value, takeoff_type_checkbox.value, season_checkbox.value)
     update_bar(country_checkbox.value, date_range.value, takeoff_type_checkbox.value, season_checkbox.value)
-    update_takeoff_map(country_checkbox.value, date_range.value, takeoff_type_checkbox.value, season_checkbox.value)
     update_takeoff_pie(country_checkbox.value, date_range.value, takeoff_type_checkbox.value, season_checkbox.value)
 
 
