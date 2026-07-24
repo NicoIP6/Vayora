@@ -164,6 +164,8 @@ def map_plot(df: pd.DataFrame, lat: str, lon: str, hover_name: str | None = None
     fig.update_traces(
         marker=dict(sizemin=5)
     )
+
+    fig.update_layout(uirevision="constant")
     
     return fig
 
