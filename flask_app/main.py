@@ -22,10 +22,6 @@ logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('bokeh').setLevel(logging.DEBUG)
 logging.getLogger('tornado').setLevel(logging.DEBUG)
 
-def dashboard_app(doc):
-    panel = create_dashboard()
-    panel.server_doc(doc)
-
 
 def start_embedded_bokeh():
     try:
