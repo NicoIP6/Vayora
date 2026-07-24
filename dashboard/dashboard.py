@@ -155,7 +155,7 @@ def checkbox_dropdown(name, options, value=None):
 
     panel_box = pn.Column(
         checkbox,
-        visible=True,
+        visible=False,
         styles={"border": "1px solid #ccc", "padding": "10px", "background": "white"}
     )
 
