@@ -159,9 +159,6 @@ def checkbox_dropdown(name, options, value=None):
         styles={"border": "1px solid #ccc", "padding": "10px", "background": "white"}
     )
 
-    def toggle(event):
-        panel_box.visible = not panel_box.visible
-
     button.on_click(toggle)
 
     return pn.Column(button, panel_box), checkbox
