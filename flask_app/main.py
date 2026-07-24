@@ -7,7 +7,6 @@ from flask_app.registering import registering_bp
 from flask_app.weather_route import weather_bp
 from shared.database_file.oltp_models import Weatherforecast, login_manager, db, bcrypt, Pilot
 from datetime import datetime, time, date as date_type
-import random
 from sqlalchemy import text
 from threading import Thread
 from bokeh.server.server import Server
