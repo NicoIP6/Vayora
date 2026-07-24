@@ -190,11 +190,11 @@ def create_dashboard():
                                                                   ]
                                                          )
     takeoff_type_dropdown, takeoff_type_checkbox = checkbox_dropdown(name="Takeoff Type",
-                                                                     options=["Alpes",
-                                                                              "Mer",
-                                                                              "Mont",
-                                                                              "Plaine",
-                                                                              "Pyrénées"
+                                                                     options=["Alps",
+                                                                              "See",
+                                                                              "Mount",
+                                                                              "Flatland",
+                                                                              "Pyrenees"
                                                                               ]
                                                                    )
 
