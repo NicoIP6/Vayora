@@ -156,6 +156,7 @@ def checkbox_dropdown(name, options, value=None):
     panel_box = pn.Column(
         checkbox,
         visible=False,
+        sizing_mode="stretch_width",  # <- ajouté, force un recalcul de taille dynamique
         styles={"border": "1px solid #ccc", "padding": "10px", "background": "white"}
     )
 
