@@ -11,7 +11,7 @@ def get_direction_data(countries, date_ran, takeoff_type, season):
     start_date, end_date = date_ran
     takeoff_type = [tt.lower() for tt in takeoff_type]
     season = [s.lower() for s in season]
-
+    print(f"[GET_DIRECTION_DATA] countries={countries}", flush=True)
     conn = Setup.get_duckdb_conn()
 
     query = """
@@ -54,7 +54,7 @@ def get_year_data(countries,date_ran, takeoff_type, season):
     start_date, end_date = date_ran
     takeoff_type = [tt.lower() for tt in takeoff_type]
     season = [s.lower() for s in season]
-
+    print(f"[GET_YEAR_DATA] countries={countries}", flush=True)
     conn = Setup.get_duckdb_conn()
 
     query = """
@@ -107,7 +107,7 @@ def get_takeoff_data(countries, date_ran, takeoff_type, season):
     start_date, end_date = date_ran
     takeoff_type = [tt.lower() for tt in takeoff_type]
     season = [s.lower() for s in season]
-
+    print(f"[GET_TAKEOFF_DATA] countries={countries}", flush=True)
     conn = Setup.get_duckdb_conn()
 
     query = """
