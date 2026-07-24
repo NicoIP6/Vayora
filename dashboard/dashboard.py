@@ -180,7 +180,6 @@ px.defaults.color_discrete_sequence = [
 ]
 
 def create_dashboard():
-    print("[CREATE_DASHBOARD] Nouvelle session créée", flush=True)
     date_range = pn.widgets.DateRangePicker(label="Date Range",
                                             value=(dt.date(2017, 1, 1), dt.date.today()),
                                             start=dt.date(2016, 1, 1)
@@ -204,94 +203,95 @@ def create_dashboard():
                                                                               "Plaine",
                                                                               "Pyrénées"
                                                                               ]
-                                                                     )
-    direction_data = pn.bind(
-        get_direction_data,
+                                                                   )
+
+
+    polar_pane = pn.pane.Plotly(width=650, height=650)
+    takeoff_map_pane = pn.pane.Plotly(width=650, height=650)
+    bar_pane = pn.pane.Plotly(height=500)
+    takeoff_pie_pane = pn.pane.Plotly(width=500, height=500)
+
+    def update_polar(countries, date_ran, takeoff_type, season):
+        df = get_direction_data(countries, date_ran, takeoff_type, season)
+        polar_pane.object = polar_plot(
+            df,
+            r="number_of_flight",
+            theta="wind_direction",
+            color="distance_category",
+            category_orders={
+                "distance_category": ["0-30", "31-50", "51-100", "101-200", "200+"]
+            },
+            title="Flight Distribution by Wind Direction (10° Rounded)",
+            width=650,
+            height=650,
+            labels={
+                "wind_direction": "Wind Direction",
+                "distance_category": "Distance Category"
+            }
+        )
+
+    def update_bar(countries, date_ran, takeoff_type, season):
+        df = get_year_data(countries, date_ran, takeoff_type, season)
+        bar_pane.object = create_yearly_bar(df)
+
+    def update_takeoff(countries, date_ran, takeoff_type, season):
+        df = get_takeoff_data(countries, date_ran, takeoff_type, season)
+        takeoff_map_pane.object = map_plot(
+            df,
+            lat="dim_takeoff_latitude",
+            lon="dim_takeoff_longitude",
+            hover_name="dim_takeoff_name",
+            color="dim_takeoff_type",
+            size="flight_count",
+            width=650,
+            height=650,
+            title="Takeoff Traffic",
+            legend_label="Takeoff Type",
+        )
+        takeoff_pie_pane.object = pie_plot(
+            df,
+            values="flight_count",
+            names="dim_takeoff_type",
+            color="dim_takeoff_type",
+            width=500,
+            height=500,
+            title="Takeoff type traffic"
+        )
+
+    # --- Bindings réactifs : watch=True car ces fonctions ne renvoient rien,
+    #     elles mettent juste à jour les panes existants en place ---
+    pn.bind(
+        update_polar,
         country_checkbox,
         date_range,
         takeoff_type_checkbox,
-        season_checkbox
+        season_checkbox,
+        watch=True
     )
 
-    polar = pn.bind(
-        lambda df: pn.pane.Plotly(
-            polar_plot(
-                df,
-                r="number_of_flight",
-                theta="wind_direction",
-                color="distance_category",
-                category_orders=
-                {
-                    "distance_category":
-                        [
-                            "0-30",
-                            "31-50",
-                            "51-100",
-                            "101-200",
-                            "200+"
-                        ]
-                },
-                title="Flight Distribution by Wind Direction (10° Rounded)",
-                width=650,
-                height=650,
-                labels=
-                {
-                    "wind_direction": "Wind Direction",
-                    "distance_category": "Distance Category"
-                }
-            )
-        ),
-        direction_data
+    pn.bind(
+        update_bar,
+        country_checkbox,
+        date_range,
+        takeoff_type_checkbox,
+        season_checkbox,
+        watch=True
     )
 
-    year_data = pn.bind(get_year_data,
-                        country_checkbox,
-                        date_range,
-                        takeoff_type_checkbox,
-                        season_checkbox
-                        )
+    pn.bind(
+        update_takeoff,
+        country_checkbox,
+        date_range,
+        takeoff_type_checkbox,
+        season_checkbox,
+        watch=True
+    )
 
-    bar = pn.bind(create_yearly_bar,
-                  year_data
-                  )
+    # --- Déclenche un premier calcul immédiat pour peupler les panes au chargement ---
+    update_polar(country_checkbox.value, date_range.value, takeoff_type_checkbox.value, season_checkbox.value)
+    update_bar(country_checkbox.value, date_range.value, takeoff_type_checkbox.value, season_checkbox.value)
+    update_takeoff(country_checkbox.value, date_range.value, takeoff_type_checkbox.value, season_checkbox.value)
 
-    takeoff_data = pn.bind(get_takeoff_data,
-                           country_checkbox,
-                           date_range,
-                           takeoff_type_checkbox,
-                           season_checkbox
-                           )
-
-    takeoff_map = pn.bind(
-        lambda df: pn.pane.Plotly(
-            map_plot(
-                df,
-                lat="dim_takeoff_latitude",
-                lon="dim_takeoff_longitude",
-                hover_name="dim_takeoff_name",
-                color="dim_takeoff_type",
-                size="flight_count",
-                width=650,
-                height=650,
-                title="Takeoff Traffic",
-                legend_label="Takeoff Type",
-            )
-        ),
-        takeoff_data)
-
-    takeoff_pie = pn.bind(
-        lambda df: pn.pane.Plotly(
-            pie_plot(
-                df,
-                values="flight_count",
-                names="dim_takeoff_type",
-                color="dim_takeoff_type",
-                width=500,
-                height=500,
-                title="Takeoff type traffic"
-            )
-        ),
-        takeoff_data)
     sidebar = pn.Column(
         date_range,
         country_dropdown,
@@ -302,11 +302,11 @@ def create_dashboard():
     )
 
     main_content = pn.FlexBox(
-        polar,
-        takeoff_map,
-        bar,
-        takeoff_pie,
-        justify_content="space-evenly",  # Espacement harmonieux
+        polar_pane,
+        takeoff_map_pane,
+        bar_pane,
+        takeoff_pie_pane,
+        justify_content="space-evenly",
         align_content="center",
         sizing_mode="stretch_width"
     )
@@ -315,7 +315,7 @@ def create_dashboard():
         sidebar,
         main_content,
         sizing_mode="stretch_width",
-        align="start" # Aligne les éléments en haut
+        align="start"
     )
 
     return layout
