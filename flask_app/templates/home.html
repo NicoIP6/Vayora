@@ -36,7 +36,7 @@
         <div class="form-group">
             <label for="place">📍 Lieu</label>
             <select name="place" id="place">
-                <option value="">— Aléatoire —</option>
+                <option value="">— les sept meuses —</option>
                 {% for loc in locations %}
                     <option value="{{ loc.name }}"> {{ 'selected' if selected_place == loc.name }}>{{ loc.name }}</option>
                 {% endfor %}
@@ -48,12 +48,10 @@
         </div>
         </form>
 
-        <!-- C'est ICI que JavaScript va injecter la nouvelle grille -->
         <div id="weather-container">
             {% include 'partials/weather_grid.html' %}
         </div>
 
-        <!-- Le script qui fait la magie en arrière-plan -->
         <script>
             // On écoute les changements sur les inputs
             document.getElementById('place').addEventListener('change', updateWeather);

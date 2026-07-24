@@ -4,11 +4,11 @@ from datetime import datetime, time
 import random
 
 weather_bp = Blueprint("weather_bp", __name__)
-
+DEFAULT_WEATHER_PLACE = "les sept meuses"
 @weather_bp.route("/api/weather")
 def api_weather():
     # ── Filtres météo (section du haut) ─────────────────────────────────
-    selected_place = request.args.get("place", "").strip()
+    selected_place = request.args.get("place", "").strip() or DEFAULT_WEATHER_PLACE
     selected_date = request.args.get("date", "").strip()
 
     # ── Requête météo principale ─────────────────────────────────────────
