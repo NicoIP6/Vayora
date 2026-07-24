@@ -125,6 +125,45 @@ def get_takeoff_data(countries, date_ran, takeoff_type, season):
     return result
 
 
+# def checkbox_dropdown(name, options, value=None):
+#     """
+#
+#     Create a checkbox dropdown widget.
+#
+#     :param name: name displayed on the button and the CheckBoxGroup
+#     :param options: list of the available options
+#     :param value : options checked by default (default None : all options checked)
+#     :return: A tuple with pn.Column() which is the ready to use dropdown object,
+#              a checkbox which is to access to the value or attached a callback
+#     """
+#
+#     def toggle(event):
+#         print(f"[TOGGLE] Clicked: {name}", flush=True)
+#         panel_box.visible = not panel_box.visible
+#
+#     if value is None:
+#         value = options
+#
+#     checkbox = pn.widgets.CheckBoxGroup(
+#         name=name,
+#         options=options,
+#         value=value,
+#         inline=False
+#     )
+#
+#     button = pn.widgets.Button(name=f"{name} ▾", button_type="default")
+#
+#     panel_box = pn.Column(
+#         checkbox,
+#         visible=False,
+#         sizing_mode="stretch_width",  # <- ajouté, force un recalcul de taille dynamique
+#         styles={"border": "1px solid #ccc", "padding": "10px", "background": "white"}
+#     )
+#
+#     button.on_click(toggle)
+#
+#     return pn.Column(button, panel_box), checkbox
+
 def checkbox_dropdown(name, options, value=None):
     """
 
@@ -133,14 +172,9 @@ def checkbox_dropdown(name, options, value=None):
     :param name: name displayed on the button and the CheckBoxGroup
     :param options: list of the available options
     :param value : options checked by default (default None : all options checked)
-    :return: A tuple with pn.Column() which is the ready to use dropdown object,
+    :return: A tuple with pn.Card() which is the ready to use dropdown object,
              a checkbox which is to access to the value or attached a callback
     """
-
-    def toggle(event):
-        print(f"[TOGGLE] Clicked: {name}", flush=True)
-        panel_box.visible = not panel_box.visible
-
     if value is None:
         value = options
 
@@ -151,18 +185,15 @@ def checkbox_dropdown(name, options, value=None):
         inline=False
     )
 
-    button = pn.widgets.Button(name=f"{name} ▾", button_type="default")
-
-    panel_box = pn.Column(
+    card = pn.Card(
         checkbox,
-        visible=False,
-        sizing_mode="stretch_width",  # <- ajouté, force un recalcul de taille dynamique
-        styles={"border": "1px solid #ccc", "padding": "10px", "background": "white"}
+        title=name,
+        collapsed=True,
+        width=280,
+        styles={"border": "1px solid #ccc", "background": "white"}
     )
 
-    button.on_click(toggle)
-
-    return pn.Column(button, panel_box), checkbox
+    return card, checkbox
 
 
 pn.extension("plotly")
