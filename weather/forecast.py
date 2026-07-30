@@ -1,7 +1,6 @@
 import openmeteo_requests
 import pandas as pd
 import requests_cache
-from retry_requests import retry
 from weather.fill_weather import insert_weather
 from shared.database_file.set_up import Setup
 from datetime import datetime as dt
@@ -131,16 +130,47 @@ def get_forecast(lat, lng, tkf_name):
 
 if __name__ == "__main__":
 
-    conn = Setup.get_duckdb_conn()
-    takeoffs = conn.execute("""
-                            SELECT tkf.takeoff_name, tkf.takeoff_latitude, tkf.takeoff_longitude 
-                            FROM vayora.takeoff tkf
-                            JOIN vayora.address ad ON ad.address_id = tkf.takeoff_address_id
-                            JOIN vayora.country ctr ON ctr.country_id = ad.address_country_id
-                            WHERE LOWER(ctr.country_code) = 'be'
-                            OR tkf.takeoff_name IN ('fumay', 'revin', 'létanne', 'blanc nez', 'haulmé', 'equihen')
-                            """).fetchall()
-    for raw in takeoffs:
-        forecast_df = get_forecast(raw[1], raw[2], raw[0])
-        insert_weather('vayora', 'weather_forecast', forecast_df, conn)
-        time.sleep(100)
+    MAX_RETRIES = 5
+    WAITING_TIME = 2700
+    for attempt in range(1, MAX_RETRIES +1):
+        conn = Setup.get_duckdb_conn()
+        try:
+            takeoffs = conn.execute("""
+                                    SELECT tkf.takeoff_name, tkf.takeoff_latitude, tkf.takeoff_longitude 
+                                    FROM vayora.takeoff tkf
+                                    JOIN vayora.address ad ON ad.address_id = tkf.takeoff_address_id
+                                    JOIN vayora.country ctr ON ctr.country_id = ad.address_country_id
+                                    WHERE LOWER(ctr.country_code) = 'be'
+                                    OR tkf.takeoff_name IN ('fumay', 'revin', 'létanne', 'blanc nez', 'haulmé', 'equihen')
+                                    """).fetchall()
+            for raw in takeoffs:
+                forecast_df = get_forecast(raw[1], raw[2], raw[0])
+                insert_weather('vayora', 'weather_forecast', forecast_df, conn)
+                time.sleep(30)
+            print("Weather downloaded")
+            break
+        except Exception as e:
+            print(f"Attempt {attempt}/{MAX_RETRIES} : {e}")
+
+            if attempt == MAX_RETRIES:
+                raise
+
+            print(f"Retrying in {WAITING_TIME // 60} minutes...")
+            time.sleep(WAITING_TIME)
+
+
+# if __name__ == "__main__":
+#
+#     conn = Setup.get_duckdb_conn()
+#     takeoffs = conn.execute("""
+#                             SELECT tkf.takeoff_name, tkf.takeoff_latitude, tkf.takeoff_longitude
+#                             FROM vayora.takeoff tkf
+#                             JOIN vayora.address ad ON ad.address_id = tkf.takeoff_address_id
+#                             JOIN vayora.country ctr ON ctr.country_id = ad.address_country_id
+#                             WHERE LOWER(ctr.country_code) = 'be'
+#                             OR tkf.takeoff_name IN ('fumay', 'revin', 'létanne', 'blanc nez', 'haulmé', 'equihen')
+#                             """).fetchall()
+#     for raw in takeoffs:
+#         forecast_df = get_forecast(raw[1], raw[2], raw[0])
+#         insert_weather('vayora', 'weather_forecast', forecast_df, conn)
+#         time.sleep(100)

@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
 <!-- Héro -->
 <div class="hero">
     <div>
@@ -48,34 +48,26 @@
         </div>
         </form>
 
-        <div id="weather-container">
-            {% include 'partials/weather_grid.html' %}
-        </div>
+<div
+    id="weather-container"
 
-        <script>
-            // On écoute les changements sur les inputs
-            document.getElementById('place').addEventListener('change', updateWeather);
-            document.getElementById('date').addEventListener('change', updateWeather);
+    hx-get="/api/weather"
 
-            function updateWeather() {
-                // 1. On récupère les valeurs
-                const place = document.getElementById('place').value;
-                const date = document.getElementById('date').value;
+    hx-trigger="load, change from:#place, change from:#date"
 
-                // Optionnel : Ajouter un effet de chargement visuel
-                document.getElementById('weather-container').style.opacity = '0.5';
+    hx-include="#place,#date"
 
-                // 2. On lance la requête en arrière-plan vers notre nouvelle route Flask
-                fetch(`/api/weather?place=${place}&date=${date}`)
-                    .then(response => response.text()) // On récupère le HTML renvoyé
-                    .then(html => {
-                        // 3. On remplace l'ancien HTML par le nouveau
-                        document.getElementById('weather-container').innerHTML = html;
-                        document.getElementById('weather-container').style.opacity = '1';
-                    })
-                    .catch(error => console.error('Erreur:', error));
-            }
-        </script>
+    hx-target="#weather-container"
+
+    hx-swap="innerHTML">
+
+    <div class="text-center">
+        Download weather...
+    </div>
+
+</div>
+
+
     </div>
 </div>
 
