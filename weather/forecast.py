@@ -1,6 +1,8 @@
 import openmeteo_requests
 import pandas as pd
 import requests_cache
+from retry_requests import retry
+
 from weather.fill_weather import insert_weather
 from shared.database_file.set_up import Setup
 from datetime import datetime as dt
