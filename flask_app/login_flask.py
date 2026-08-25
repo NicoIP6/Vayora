@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint
 from flask_login import login_user, logout_user, login_required
 from shared.database_file.oltp_models import *
-from flask_app.main import limiter
+from shared.database_file.extensions import limiter
 
 login_bp = Blueprint("login_bp", __name__)
 

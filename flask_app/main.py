@@ -16,9 +16,7 @@ from bokeh.embed import server_document
 import os
 from werkzeug.middleware.proxy_fix import ProxyFix
 import logging
-from flask_wtf.csrf import CSRFProtect
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from shared.database_file.extensions import limiter, csrf
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -61,8 +59,6 @@ if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not os.environ.get("FLASK_EN
     t = Thread(target=start_embedded_bokeh, daemon=True)
     t.start()
 
-csrf = CSRFProtect()
-limiter = Limiter(key_func=get_remote_address)
 
 def create_app():
     app = Flask(__name__)
