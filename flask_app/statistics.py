@@ -1,6 +1,6 @@
 import pandas as pd
 from flask import render_template, redirect, url_for, flash, Blueprint, send_file
-from flask_login import login_required
+from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
 import io
 from shared.database_file.dwh_models import *
@@ -48,9 +48,10 @@ def _build_df(pilot_number):
     return df
 
 
-@analytics.route('/analytics/<int:pilot_number>', methods=['GET', 'POST'])
+@analytics.route('/analytics/<int:pilot_number>', methods=['GET'])
 @login_required
-def index(pilot_number):
+def index():
+    pilot_number = current_user.pilot_number
     pilot = DimPilot.query.filter_by(dim_pilot_bk=pilot_number).first()
     if not pilot:
         flash("Pilote introuvable", "error")
@@ -71,7 +72,6 @@ def index(pilot_number):
             flights_rows=[],
         )
 
-    # ── Globaux ──────────────────────────────────────────────────────────────
     total_flights  = len(df)
     total_distance = int(df["distance"].sum())
     max_distance   = int(df["distance"].max())
@@ -81,7 +81,6 @@ def index(pilot_number):
     total_h = df["airtime_h"].sum()
     total_airtime = f"{int(total_h)}h{int((total_h % 1) * 60):02d}"
 
-    # ── Par saison ────────────────────────────────────────────────────────────
     by_season = (
         df.groupby("season")
         .agg(total_distance=("distance", "sum"))
@@ -93,7 +92,6 @@ def index(pilot_number):
     best_season = by_season.loc[by_season["total_distance"].idxmax(), "season"] \
         if not by_season.empty else "—"
 
-    # ── Par année ─────────────────────────────────────────────────────────────
     by_year = (
         df.groupby("year")
         .agg(flight_count=("distance", "count"), total_hours=("airtime_h", "sum"))
@@ -104,7 +102,6 @@ def index(pilot_number):
     flights_per_year = by_year["flight_count"].tolist()
     hours_per_year   = [round(h, 1) for h in by_year["total_hours"].tolist()]
 
-    # ── Par décollage ─────────────────────────────────────────────────────────
     by_takeoff = (
         df.groupby("takeoff")["distance"]
         .max()
@@ -114,7 +111,6 @@ def index(pilot_number):
     takeoff_names    = by_takeoff.index.tolist()
     takeoff_max_dist = by_takeoff.astype(int).tolist()
 
-    # ── Détail des vols (tableau) ─────────────────────────────────────────────
     flights_rows = (
         df.sort_values("date", ascending=False)
         .drop(columns=["airtime_h", "year"], errors="ignore")
@@ -141,13 +137,14 @@ def index(pilot_number):
 
 @analytics.route('/analytics/<int:pilot_number>/download', methods=['GET'])
 @login_required
-def download_csv(pilot_number):
+def download_csv():
+    pilot_number = current_user.pilot_number
     pilot = DimPilot.query.filter_by(dim_pilot_bk=pilot_number).first()
     if not pilot:
         flash("Pilote introuvable", "error")
         return redirect(url_for("analytics.index", pilot_number=pilot_number))
 
-    df = _build_df(pilot.dim_pilot_bk)
+    df = _build_df(pilot.dim_pilot_sk)
 
     if df.empty:
         flash("Aucun vol trouvé", "warning")

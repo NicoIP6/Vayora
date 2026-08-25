@@ -26,6 +26,7 @@
     {% endwith %}
 
     <form method="POST" action="{{ url_for('registering_bp.register') }}" id="registerForm" class="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="email">Email</label>
             <input type="email" name="email" id="email" placeholder="pilote@example.com"
@@ -37,20 +38,17 @@
                    value="{{ form_data.password if form_data else '' }}" required>
         </div>
         <div class="form-group">
-            {# ⚠️ Adapter : le champ pilotnumber correspond à pilot_number dans votre modèle Pilot #}
             <label for="pilotnumber">Pilot number</label>
             <input type="text" name="pilotnumber" id="pilotnumber" placeholder="ex. P1234"
                    value="{{ form_data.pilotnumber if form_data else '' }}" required>
         </div>
         <div class="form-row">
             <div class="form-group">
-                {# ⚠️ Adapter : name → pilot_firstname dans votre modèle Pilot #}
                 <label for="name">First name</label>
                 <input type="text" name="name" id="name" placeholder="Jean"
                        value="{{ form_data.name if form_data else '' }}" required>
             </div>
             <div class="form-group">
-                {# ⚠️ Adapter : lastname → pilot_lastname dans votre modèle Pilot #}
                 <label for="lastname">Last name</label>
                 <input type="text" name="lastname" id="lastname" placeholder="Dupont"
                        value="{{ form_data.lastname if form_data else '' }}" required>
