@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_limiter.util import get_remote_address
 from flask_login import login_required, current_user
 from shared.database_file.set_up import Setup
 from flask_app.statistics import analytics
@@ -15,6 +16,9 @@ from bokeh.embed import server_document
 import os
 from werkzeug.middleware.proxy_fix import ProxyFix
 import logging
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -57,15 +61,18 @@ if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not os.environ.get("FLASK_EN
     t = Thread(target=start_embedded_bokeh, daemon=True)
     t.start()
 
-
+csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address)
 
 def create_app():
     app = Flask(__name__)
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     app.config.from_object(Setup)
+    csrf.init_app(app)
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
+    limiter.init_app(app)
 
     login_manager.login_view = "login_bp.login"
 
@@ -87,23 +94,6 @@ def create_app():
         selected_ai_date = request.args.get("ai_date", "").strip()
         selected_ai_place = request.args.get("ai_place", "").strip()
 
-        if current_user.is_authenticated and selected_ai_date:
-            try:
-                datetime.strptime(selected_ai_date, "%Y-%m-%d")  # validation
-                place_filter = f"AND weather_place = '{selected_ai_place}'" if selected_ai_place else ""
-                sql = f"""
-                        SELECT weather_place, score_vol, wind_speed_120m
-                        FROM predictions_flight
-                        WHERE date_jour = '{selected_ai_date}'
-                          AND is_flyable = True
-                          {place_filter}
-                        ORDER BY score_vol DESC
-                    """
-                result = db.session.execute(text(sql))
-                predictions = result.fetchall()
-            except ValueError:
-                pass
-
         panel_script = server_document(f"{request.scheme}://{request.host}/dashboard")
 
         return render_template(
@@ -122,8 +112,6 @@ def create_app():
     app.register_blueprint(registering_bp)
     app.register_blueprint(weather_bp)
     return app
-
-
 app = create_app()
 if __name__ == "__main__":
     app.run()

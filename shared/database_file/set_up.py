@@ -6,7 +6,9 @@ class Setup:
     """
     Basic set up for the database_file's
     """
-
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = os.getenv("FLASK_ENV") != "development"
     SECRET_KEY = os.getenv("SECRET_KEY")
     PASSWORD = os.getenv("POSTGRES_PASSWORD")
     USERNAME = os.getenv("POSTGRES_USER")
@@ -14,8 +16,8 @@ class Setup:
     DB_OLAP_NAME = os.getenv("POSTGRES_DW", "vayora_dw")
     DB_WEATHER_NAME = os.getenv("POSTGRES_STG", "vayora_weather")
 
-    DB_HOST = os.getenv("DB_HOST", "vayora_db")
-    DB_PORT = os.getenv("DB_PORT", "5432")
+    DB_HOST = os.getenv("DB_HOST")
+    DB_PORT = os.getenv("DB_PORT")
 
     SQLALCHEMY_DATABASE_URI = (
         f"postgresql://{USERNAME}:{PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_OLTP_NAME}"
