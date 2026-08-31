@@ -1,0 +1,173 @@
+from shared.database_file.extensions import db, bcrypt, login_manager
+from flask_login import UserMixin
+from sqlalchemy.dialects.postgresql import TIMESTAMP
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Pilot.query.get(int(user_id))
+
+class Pilot(db.Model, UserMixin):
+    __bind_key__ = None
+
+    pilot_id = db.Column(db.Integer, primary_key=True)
+    pilot_number = db.Column(db.Integer, nullable=False)
+    pilot_firstname = db.Column(db.String(150), nullable=False)
+    pilot_lastname = db.Column(db.String(150), nullable=False)
+    pilot_email = db.Column(db.String(250), nullable=False)
+    pilot_phone = db.Column(db.String(20))
+    pilot_birthday = db.Column(db.Date)
+    pilot_address_id = db.Column(db.Integer, db.ForeignKey('address.address_id'))
+    pilot_address = db.relationship('Address', backref='users')
+    pilot_maxdistance = db.Column(db.Integer, nullable=True)
+    pilot_license_number = db.Column(db.String(150), nullable=True)
+    pilot_validator = db.Column(db.Boolean, default=False)
+    pilot_validator_score = db.Column(db.Integer, nullable=True)
+    pilot_password_hash = db.Column(db.String(128), nullable=False)
+
+    def get_id(self):
+        return str(self.pilot_id)
+
+    def set_password(self, password):
+        self.pilot_password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.pilot_password_hash, password)
+
+class Takeoff(db.Model):
+    __bind_key__ = None
+
+    takeoff_id = db.Column(db.Integer, primary_key=True)
+    takeoff_name = db.Column(db.String(150), nullable=False)
+    takeoff_latitude = db.Column(db.Float, nullable=False)
+    takeoff_longitude = db.Column(db.Float, nullable=False)
+    takeoff_type = db.Column(db.String(150), nullable=True)
+    takeoff_directionDegreeMin = db.Column(db.Integer, nullable=True)
+    takeoff_directionDegreeMax = db.Column(db.Integer, nullable=True)
+    takeoff_globalDirection = db.Column(db.String(150), nullable=True)
+    takeoff_elevation = db.Column(db.Integer, nullable=True)
+    takeoff_verticalDrop = db.Column(db.Integer, nullable=True)
+    takeoff_difficulty = db.Column(db.String(30), nullable=True)
+    takeoff_comment = db.Column(db.Text, nullable= True)
+    takeoff_address_id = db.Column(db.Integer, db.ForeignKey('address.address_id'), nullable=False)
+    takeoff_address = db.relationship('Address', backref='takeoffs')
+
+class Flight(db.Model):
+    __bind_key__ = None
+
+    flight_id = db.Column(db.Integer, primary_key=True)
+    flight_starttime = db.Column(TIMESTAMP(timezone=False, precision=0), nullable=False)
+    flight_airtime = db.Column(db.Time, nullable=False)
+    flight_distance = db.Column(db.Integer, nullable=True)
+    flight_maxheight = db.Column(db.Integer, nullable=True)
+    flight_pilot_id = db.Column(db.Integer, db.ForeignKey('pilot.pilot_id'), nullable=False)
+    flight_pilot = db.relationship('Pilot', backref='flights')
+    flight_takeoff_id = db.Column(db.Integer, db.ForeignKey('takeoff.takeoff_id'))
+    flight_takeoff = db.relationship('Takeoff', backref='flights')
+
+class Country(db.Model):
+    __bind_key__ = None
+
+    country_id = db.Column(db.Integer, primary_key=True)
+    country_name = db.Column(db.String(150), nullable=False)
+    country_code = db.Column(db.String(2), nullable=False)
+
+class City(db.Model):
+    __bind_key__ = None
+
+    city_id = db.Column(db.Integer, primary_key=True)
+    city_name = db.Column(db.String(150), nullable=False, unique=True)
+    city_postal_code = db.Column(db.String(10), nullable=False)
+
+class Street(db.Model):
+    __bind_key__ = None
+
+    street_id = db.Column(db.Integer, primary_key=True)
+    street_name = db.Column(db.String(150), nullable=False, unique=True)
+
+
+class Address(db.Model):
+    __bind_key__ = None
+
+    address_id = db.Column(db.Integer, primary_key=True)
+    address_street_number = db.Column(db.String(10), nullable=True)
+
+    address_city_id = db.Column(db.Integer, db.ForeignKey('city.city_id'), nullable=False)
+    address_city = db.relationship('City', backref='addresses')
+    address_street_id = db.Column(db.Integer, db.ForeignKey('street.street_id'), nullable=True)
+    address_street = db.relationship('Street', backref='addresses')
+    address_country_id = db.Column(db.Integer, db.ForeignKey('country.country_id'), nullable=False)
+    address_country = db.relationship('Country', backref='addresses')
+
+    __table_args__ = (
+        db.UniqueConstraint(address_street_number, address_city_id, address_street_id, address_country_id),
+    )
+
+class Weatherforecast(db.Model):
+    __tablename__ = 'weather_forecast'
+    __bind_key__ = None
+
+    weather_id = db.Column(db.Integer, primary_key=True)
+    weather_date = db.Column(TIMESTAMP(timezone=False, precision=0), nullable=False)
+    forecast_date = db.Column(TIMESTAMP(timezone=False, precision=0), nullable=False)
+    weather_place = db.Column(db.String(150), nullable=False)
+    temperature_2m = db.Column(db.Numeric(6, 2))
+    relative_humidity_2m = db.Column(db.Numeric(6, 2))
+    dew_point_2m = db.Column(db.Numeric(6, 2))
+    precipitation_probability = db.Column(db.Numeric(6, 2))
+    precipitation = db.Column(db.Numeric(6, 2))
+    rain = db.Column(db.Numeric(6, 2))
+    showers = db.Column(db.Numeric(6, 2))
+    snowfall = db.Column(db.Numeric(6, 2))
+    pressure_msl = db.Column(db.Numeric(6, 2))
+    surface_pressure = db.Column(db.Numeric(6, 2))
+    cloud_cover = db.Column(db.Numeric(6, 2))
+    cloud_cover_low = db.Column(db.Numeric(6, 2))
+    cloud_cover_mid = db.Column(db.Numeric(6, 2))
+    cloud_cover_high = db.Column(db.Numeric(6, 2))
+    evapotranspiration = db.Column(db.Numeric(6, 2))
+    wind_speed_10m = db.Column(db.Numeric(6, 2))
+    wind_speed_80m = db.Column(db.Numeric(6, 2))
+    wind_speed_120m = db.Column(db.Numeric(6, 2))
+    wind_speed_180m = db.Column(db.Numeric(6, 2))
+    wind_direction_10m = db.Column(db.Numeric(6, 2))
+    wind_direction_80m = db.Column(db.Numeric(6, 2))
+    wind_direction_120m = db.Column(db.Numeric(6, 2))
+    wind_direction_180m = db.Column(db.Numeric(6, 2))
+    wind_gusts_10m = db.Column(db.Numeric(6, 2))
+    temperature_80m = db.Column(db.Numeric(6, 2))
+    temperature_120m = db.Column(db.Numeric(6, 2))
+    temperature_180m = db.Column(db.Numeric(6, 2))
+    soil_moisture_1_to_3cm = db.Column(db.Numeric(6, 2))
+    soil_moisture_9_to_27cm = db.Column(db.Numeric(6, 2))
+    temperature_950hpa = db.Column(db.Numeric(6, 2))
+    temperature_925hpa = db.Column(db.Numeric(6, 2))
+    temperature_900hpa = db.Column(db.Numeric(6, 2))
+    temperature_850hpa = db.Column(db.Numeric(6, 2))
+    temperature_800hpa = db.Column(db.Numeric(6, 2))
+    relative_humidity_950hpa = db.Column(db.Numeric(6, 2))
+    relative_humidity_925hpa = db.Column(db.Numeric(6, 2))
+    relative_humidity_900hpa = db.Column(db.Numeric(6, 2))
+    relative_humidity_850hpa = db.Column(db.Numeric(6, 2))
+    relative_humidity_800hpa = db.Column(db.Numeric(6, 2))
+    cloud_cover_950hpa = db.Column(db.Numeric(6, 2))
+    cloud_cover_925hpa = db.Column(db.Numeric(6, 2))
+    cloud_cover_900hpa = db.Column(db.Numeric(6, 2))
+    cloud_cover_850hpa = db.Column(db.Numeric(6, 2))
+    cloud_cover_800hpa = db.Column(db.Numeric(6, 2))
+    wind_speed_950hpa = db.Column(db.Numeric(6, 2))
+    wind_speed_925hpa = db.Column(db.Numeric(6, 2))
+    wind_speed_900hpa = db.Column(db.Numeric(6, 2))
+    wind_speed_850hpa = db.Column(db.Numeric(6, 2))
+    wind_speed_800hpa = db.Column(db.Numeric(6, 2))
+    wind_direction_950hpa = db.Column(db.Numeric(5, 2))
+    wind_direction_925hpa = db.Column(db.Numeric(6, 2))
+    wind_direction_900hpa = db.Column(db.Numeric(6, 2))
+    wind_direction_850hpa = db.Column(db.Numeric(6, 2))
+    wind_direction_800hpa = db.Column(db.Numeric(6, 2))
+    geopotential_height_950hpa = db.Column(db.Numeric(6, 2))
+    geopotential_height_925hpa = db.Column(db.Numeric(6, 2))
+    geopotential_height_900hpa = db.Column(db.Numeric(6, 2))
+    geopotential_height_850hpa = db.Column(db.Numeric(6, 2))
+    geopotential_height_800hpa = db.Column(db.Numeric(6, 2))
+
