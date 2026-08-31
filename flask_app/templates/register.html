@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Inscription – Flight Analytics{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+<div class="auth-card">
+    <div class="auth-logo">
+        <div class="plane">🪂</div>
+        <h2>Create an account</h2>
+        <p>Join the community and track your performance.</p>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flashes" style="margin-bottom:1rem;">
+                {% for message in messages %}
+                    <div class="flash flash-error">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('registering_bp.register') }}" id="registerForm" class="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" name="email" id="email" placeholder="pilote@example.com"
+                   value="{{ form_data.email if form_data else '' }}" required autofocus>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" placeholder="Minimum 8 caractères"
+                   value="{{ form_data.password if form_data else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="pilotnumber">Pilot number</label>
+            <input type="text" name="pilotnumber" id="pilotnumber" placeholder="ex. P1234"
+                   value="{{ form_data.pilotnumber if form_data else '' }}" required>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="name">First name</label>
+                <input type="text" name="name" id="name" placeholder="Jean"
+                       value="{{ form_data.name if form_data else '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="lastname">Last name</label>
+                <input type="text" name="lastname" id="lastname" placeholder="Dupont"
+                       value="{{ form_data.lastname if form_data else '' }}" required>
+            </div>
+        </div>
+        <input type="hidden" name="update_confirm" id="updateConfirm" value="">
+        <button type="submit" class="btn btn-primary btn-block">Create an account →</button>
+    </form>
+
+    <div class="auth-footer">
+        Already registered ? <a href="{{ url_for('login_bp.login') }}">Login</a>
+    </div>
+</div>
+</div>
+
+{% if show_popup %}
+<script>
+    if (confirm("Pilot number "{{ pilotnumber }}" already exists.")) {
+        document.getElementById('updateConfirm').value = 'true';
+    } else {
+        document.getElementById('updateConfirm').value = 'false';
+    }
+    document.getElementById('registerForm').submit();
+</script>
+{% endif %}
+
+{% endblock %}

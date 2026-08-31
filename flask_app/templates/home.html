@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil – Flight Analytics{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
+
+{% block content %}
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+<!-- Héro -->
+<div class="hero">
+    <div>
+        <h1>✈ Vayora Analytics</h1>
+        <p>Weather intelligence beyond the forecast</p>
+    </div>
+    {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('login_bp.login') }}" class="btn btn-accent">Login →</a>
+    {% endif %}
+</div>
+
+<!-- Section météo -->
+<div class="card">
+    <div class="weather-card">
+        <div class="weather-header">
+            <h2>Daily weather</h2>
+            {% if weather %}
+                <span class="badge">
+                    📍 {{ weather.weather_place }} &nbsp;·&nbsp;
+                    {{ weather.weather_date.strftime('%d/%m/%Y %H:%M') }}
+                </span>
+            {% endif %}
+        </div>
+
+        <form class="weather-controls">
+        <div class="form-group">
+            <label for="place">📍 Lieu</label>
+            <select name="place" id="place">
+                <option value="">— les sept meuses —</option>
+                {% for loc in locations %}
+                    <option value="{{ loc.name }}"> {{ 'selected' if selected_place == loc.name }}>{{ loc.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="date">📅 Date</label>
+            <input type="date" name="date" id="date" value="{{ selected_date or '' }}">
+        </div>
+        </form>
+
+<div
+    id="weather-container"
+
+    hx-get="/api/weather"
+
+    hx-trigger="load, change from:#place, change from:#date"
+
+    hx-include="#place,#date"
+
+    hx-target="#weather-container"
+
+    hx-swap="innerHTML">
+
+    <div class="text-center">
+        Download weather...
+    </div>
+
+</div>
+
+
+    </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="card ai-section">
+    <div class="ai-header">
+        <h2>🤖 Prédiction IA — Sites volables</h2>
+        <span class="badge-ai">✨ Powered by ML</span>
+    </div>
+
+    <form method="GET" action="{{ url_for('home') }}" class="ai-controls">
+        {# Conserver les filtres météo dans l'URL #}
+        {% if selected_place %}<input type="hidden" name="place" value="{{ selected_place }}">{% endif %}
+        {% if selected_date  %}<input type="hidden" name="date"  value="{{ selected_date  }}">{% endif %}
+
+        <div class="form-group">
+            <label for="ai_date">📅 Date de prédiction</label>
+            <input type="date" name="ai_date" id="ai_date"
+                   value="{{ selected_ai_date or '' }}"
+                   onchange="this.form.submit()"
+                   style="padding:.65rem .9rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:.9rem;">
+        </div>
+        <div class="form-group">
+            <label for="ai_place">📍 Lieu (optionnel)</label>
+            <select name="ai_place" id="ai_place" onchange="this.form.submit()">
+                <option value="">— Tous les sites —</option>
+                {% for loc in locations %}
+                    <option value="{{ loc.name }}">
+                        {{ 'selected' if selected_ai_place == loc.name }}>
+                        {{ loc.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-outline">🔄 Actualiser</button>
+    </form>
+
+    {% if predictions %}
+        <div class="prediction-table-wrap">
+            <table class="prediction-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Site de décollage</th>
+                        <th>Score vol</th>
+                        <th>Vent 120 m</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pred in predictions %}
+                    <tr>
+                        <td class="rank-cell">
+                            {% if loop.index == 1 %}🥇
+                            {% elif loop.index == 2 %}🥈
+                            {% elif loop.index == 3 %}🥉
+                            {% else %}{{ loop.index }}
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ pred.weather_place }}</strong></td>
+                        <td>
+                            <span class="score-pill
+                                {% if pred.score_vol >= 75 %}score-high
+                                {% elif pred.score_vol >= 50 %}score-medium
+                                {% else %}score-low{% endif %}">
+                                {{ pred.score_vol }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="wind-cell">💨 {{ pred.wind_speed_120m }} km/h</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="prediction-count">
+            {{ predictions | length }} site{{ 's' if predictions | length > 1 }} volable{{ 's' if predictions | length > 1 }} —
+            <strong>{{ selected_ai_date }}</strong>
+            {% if selected_ai_place %} · <strong>{{ selected_ai_place }}</strong>{% endif %}
+        </p>
+    {% else %}
+        <div class="no-data">
+            <div class="no-data-icon">🪂</div>
+            <p>
+                {% if selected_ai_date %}
+                    Aucun site volable prédit pour cette date{% if selected_ai_place %} et ce lieu{% endif %}.
+                {% else %}
+                    Sélectionnez une date pour afficher les prédictions IA.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endif %}
+<div class="card" style="display: flex; flex-direction: column; align-items: center; width: 100%; overflow: hidden;">
+
+    <div class="weather-header" style="width: 100%;">
+        <h2>Flight Analytics</h2>
+    </div>
+
+    <!-- Conteneur restrictif et centré -->
+    <div style="width: 100%; display: flex; justify-content: center; overflow-x: auto; padding: 20px 0;">
+        {{ panel_script|safe }}
+    </div>
+
+</div>
+{% endblock %}

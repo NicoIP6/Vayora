@@ -1,0 +1,69 @@
+{% if weather %}
+    <div class="weather-grid">
+        <div class="weather-metric">
+            <div class="metric-icon">💧</div>
+            <div class="metric-label">Temperature</div>
+            <div class="metric-value">{{ weather.temperature_120m }}<span class="metric-unit"> C°</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌧</div>
+            <div class="metric-label">Rain</div>
+            <div class="metric-value">{{ weather.precipitation_probability }}<span class="metric-unit"> %</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌧</div>
+            <div class="metric-label">Cloud cover</div>
+            <div class="metric-value">{{ weather.cloud_cover }}<span class="metric-unit"> %</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🔽</div>
+            <div class="metric-label">Wind speed</div>
+            <div class="metric-value">{{ weather.wind_speed_120m }}<span class="metric-unit"> km/h</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🔽</div>
+            <div class="metric-label">Wind direction</div>
+            <div class="metric-value">{{ weather.wind_direction_120m }}<span class="metric-unit"> °</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌧</div>
+            <div class="metric-label">Relative humidity</div>
+            <div class="metric-value">{{ weather.relative_humidity_950hpa }}<span class="metric-unit"> %</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌡</div>
+            <div class="metric-label">MSL pressure</div>
+            <div class="metric-value">{{ weather.pressure_msl }}<span class="metric-unit"> hpa</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🌡</div>
+            <div class="metric-label">Surface pressure</div>
+            <div class="metric-value">{{ weather.surface_pressure }}<span class="metric-unit"> hpa</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">💨</div>
+            <div class="metric-label">CAPE</div>
+            <div class="metric-value">{{ weather.cape }}<span class="metric-unit"> J/Kg</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">🧭</div>
+            <div class="metric-label">Cloud base</div>
+            <div class="metric-value">{{ weather.boundary_layer_height }}<span class="metric-unit"> m</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">☁️</div>
+            <div class="metric-label">Lifted index</div>
+            <div class="metric-value">{{ weather.lifted_index }}<span class="metric-unit"> C°</span></div>
+        </div>
+        <div class="weather-metric">
+            <div class="metric-icon">📊</div>
+            <div class="metric-label">Convective inhibition</div>
+            <div class="metric-value">{{ weather.convective_inhibition }}<span class="metric-unit"> J/Kg</span></div>
+        </div>
+    </div>
+    {% else %}
+    <div class="no-data">
+        <div class="no-data-icon">🌫</div>
+        <p>No data available for this filter.</p>
+    </div>
+{% endif %}

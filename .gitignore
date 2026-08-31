@@ -1,0 +1,10 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.idea/
+*.sqlite
+dump_vayora.sql
+data/
+logging/
+*.ipynb
